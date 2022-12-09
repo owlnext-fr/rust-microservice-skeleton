@@ -12,15 +12,15 @@ pub fn load() -> Config {
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct PublicConfiguration {
-    pub api_name: String,
-    pub api_version: String,
+    pub name: String,
+    pub version: String,
 }
 
 impl PublicConfiguration {
     pub fn from_config(configuration: &Config) -> Self {
         PublicConfiguration {
-            api_name: configuration.get_string("package.name").unwrap(),
-            api_version: configuration.get_string("package.version").unwrap(),
+            name: configuration.get_string("package.name").unwrap(),
+            version: configuration.get_string("package.version").unwrap(),
         }
     }
 }

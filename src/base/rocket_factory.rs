@@ -1,8 +1,7 @@
 use rocket::{Build, Rocket};
 
+use super::{configuration, fairings::jwt_certificates::JWTCertificatesFairing};
 use crate::controllers::{app, catchers};
-
-use super::configuration;
 
 pub fn build() -> Rocket<Build> {
     rocket::build()
@@ -12,4 +11,6 @@ pub fn build() -> Rocket<Build> {
         .register("/", catchers![catchers::default_catcher])
         // middlewares/fairings
         .manage(configuration::load())
+        // fairings
+        .attach(JWTCertificatesFairing::default())
 }
