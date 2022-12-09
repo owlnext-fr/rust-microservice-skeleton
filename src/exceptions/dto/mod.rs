@@ -1,2 +1,1 @@
-pub mod http_internal_server_error_exception;
-pub mod http_not_found_exception;
+pub mod http_exception;

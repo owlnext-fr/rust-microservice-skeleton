@@ -9,7 +9,7 @@ pub fn build() -> Rocket<Build> {
         // routes
         .mount("/", routes![app::index::index])
         // catchers
-        .register("/", catchers![catchers::not_found])
+        .register("/", catchers![catchers::default_catcher])
         // middlewares/fairings
         .manage(configuration::load())
 }
