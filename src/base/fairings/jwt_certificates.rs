@@ -1,16 +1,11 @@
-use std::{
-    fs,
-    io::Write,
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::{fs, path::PathBuf, process::Command};
 
 use rocket::{
     fairing::{Fairing, Info, Kind, Result},
     Build, Rocket,
 };
 
-use crate::{console_error, console_warning};
+use crate::{base::jwt, console_error, console_warning};
 
 #[derive(Default)]
 pub struct JWTCertificatesFairing {}
@@ -25,9 +20,7 @@ impl Fairing for JWTCertificatesFairing {
     }
 
     async fn on_ignite(&self, rocket: Rocket<Build>) -> Result {
-        let mut jwt_sec_dir: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        jwt_sec_dir.push("storage");
-        jwt_sec_dir.push("jwt");
+        let jwt_sec_dir = jwt::get_certificate_dir();
 
         if !jwt_sec_dir.exists() {
             let cr_result = fs::create_dir(jwt_sec_dir.clone());
@@ -40,11 +33,8 @@ impl Fairing for JWTCertificatesFairing {
             }
         }
 
-        let mut private_key_path: PathBuf = jwt_sec_dir.clone();
-        private_key_path.push("private.pem");
-
-        let mut public_key_path: PathBuf = jwt_sec_dir.clone();
-        public_key_path.push("public.pem");
+        let private_key_path: PathBuf = jwt::get_private_certificate_path();
+        let public_key_path: PathBuf = jwt::get_public_certificate_path();
 
         let mut needs_generation: bool = false;
 
@@ -54,33 +44,29 @@ impl Fairing for JWTCertificatesFairing {
 
         if public_key_path.exists() && !private_key_path.exists() {
             console_warning!("Something is wrong with certificates, they will be generated.");
-            fs::remove_file(public_key_path.clone()).unwrap();
+            fs::remove_file(&public_key_path).unwrap();
             needs_generation = true;
         }
 
         if !public_key_path.exists() && private_key_path.exists() {
             console_warning!("Something is wrong with certificates, they will be generated.");
-            fs::remove_file(private_key_path.clone()).unwrap();
+            fs::remove_file(&private_key_path).unwrap();
             needs_generation = true;
         }
 
         if needs_generation {
             // TODO refactor
-            let mut child = Command::new("sh")
-                .stdin(Stdio::piped())
-                .stderr(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
+            let mut child = Command::new("sh");
 
-            let child_stdin = child.stdin.as_mut().unwrap();
+            let certs_creation = child
+                .arg("-c")
+                .arg(format!("cd {} && openssl genrsa -out private.pem 2048 && openssl rsa -in private.pem -outform PEM -pubout -out public.pem", jwt_sec_dir.as_os_str().to_string_lossy()))
+                .output();
 
-            child_stdin
-                .write_all(b"openssl genrsa -out private.pem 2048")
-                .unwrap();
-            child_stdin
-                .write_all(b"openssl rsa -in private.pem -outform PEM -pubout -out public.pem")
-                .unwrap();
+            if certs_creation.is_err() {
+                console_error!("Cannot create secured JWT token certificates, aborting launch...");
+                return Err(rocket);
+            }
         }
 
         Ok(rocket)

@@ -2,6 +2,8 @@ use config::Config;
 use rocket::serde::Serialize;
 
 pub fn load() -> Config {
+    dotenv::from_filename(".env.local").ok();
+
     Config::builder()
         .add_source(config::File::with_name("Cargo.toml"))
         .add_source(config::Environment::with_prefix("APP"))

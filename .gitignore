@@ -11,5 +11,11 @@ Cargo.lock
 
 
 # Added by cargo
-
 /target
+
+# local environment file
+.env
+.env.*
+
+# storage
+storage/jwt/*
