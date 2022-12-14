@@ -1,13 +1,13 @@
-use base::rocket_factory;
-
 #[macro_use]
 extern crate rocket;
 
-pub mod base;
 pub mod controllers;
+pub mod core;
+pub mod domain;
 pub mod exceptions;
+pub mod middlewares;
 
 #[launch]
 fn rocket() -> _ {
-    rocket_factory::build()
+    core::rocket_factory::build()
 }

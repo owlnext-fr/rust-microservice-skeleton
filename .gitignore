@@ -19,3 +19,6 @@ Cargo.lock
 
 # storage
 storage/jwt/*
+
+# vscode config for local database connector
+.vscode/settings.json

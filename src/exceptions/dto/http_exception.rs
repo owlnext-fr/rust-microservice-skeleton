@@ -1,7 +1,7 @@
 use rocket::http::Status;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 #[serde(crate = "rocket::serde")]
 pub struct HttpException {
     pub code: u16,
@@ -23,5 +23,9 @@ impl HttpException {
         ex.message = message;
 
         ex
+    }
+
+    pub fn get_status(&self) -> Status {
+        Status::new(self.code)
     }
 }

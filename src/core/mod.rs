@@ -1,6 +1,9 @@
 pub mod configuration;
+pub mod database;
 pub mod fairings;
 pub mod jwt;
 pub mod macros;
+pub mod password;
+pub mod response;
 pub mod rocket_factory;
 pub mod security;

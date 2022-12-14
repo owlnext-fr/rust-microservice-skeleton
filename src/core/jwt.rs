@@ -1,13 +1,15 @@
+use std::{collections::HashSet, error::Error, fs, path::PathBuf};
+
 use jwt_simple::prelude::*;
-use std::{error::Error, fs, path::PathBuf};
+use serde::{Deserialize, Serialize};
 
 use super::configuration;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct APIClaim {
-    user_id: u32,
-    roles: Vec<String>,
-    username: String,
+    pub user_id: i32,
+    pub roles: Vec<String>,
+    pub username: String,
 }
 
 pub fn encode(claim: APIClaim) -> Result<String, Box<dyn Error>> {
@@ -29,11 +31,13 @@ pub fn encode(claim: APIClaim) -> Result<String, Box<dyn Error>> {
 pub fn decode(token: &str) -> Result<JWTClaims<APIClaim>, Box<dyn Error>> {
     let public_key = RS512PublicKey::from_pem(&get_public_certificate_content()?)?;
 
-    let mut options = VerificationOptions::default();
-    options.accept_future = true;
-    options.allowed_issuers = Some(HashSet::from_strings(&[
-        configuration::load().get_string("package.name")?
-    ]));
+    let options = VerificationOptions {
+        accept_future: true,
+        allowed_issuers: Some(HashSet::from_strings(&[
+            configuration::load().get_string("package.name")?
+        ])),
+        ..Default::default()
+    };
 
     let claims = public_key.verify_token::<APIClaim>(token, Some(options))?;
 

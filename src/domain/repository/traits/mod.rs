@@ -1,0 +1,1 @@
+pub mod database_enabled_repository_trait;

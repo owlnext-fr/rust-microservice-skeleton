@@ -5,7 +5,7 @@ use rocket::{
     Build, Rocket,
 };
 
-use crate::{base::jwt, console_error, console_warning};
+use crate::{console_error, console_warning, core::jwt};
 
 #[derive(Default)]
 pub struct JWTCertificatesFairing {}
