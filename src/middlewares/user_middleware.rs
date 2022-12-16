@@ -17,6 +17,14 @@ pub enum AuthenticationError {
     WrongPassword(i32),
 }
 
+#[derive(Debug, Fail)]
+pub enum JWTAuthenticationError {
+    #[fail(display = "Invalid token")]
+    InvalidToken,
+    #[fail(display = "User {} not found.", _0)]
+    UserNotFound(i32),
+}
+
 #[derive(Default)]
 pub struct UserMiddleware<UserRepository> {
     repository: UserRepository,
@@ -48,6 +56,31 @@ impl UserMiddleware<UserRepository> {
         }
 
         Err(AuthenticationError::UserNotFound(input.login.clone()))
+    }
+
+    pub fn authenticate_user_from_jwt(
+        &self,
+        jwt_token: &str,
+    ) -> Result<User, JWTAuthenticationError> {
+        let issuer = self.configuration.get_string("package.name").unwrap();
+
+        let jwt_validation_result = jwt::decode(jwt_token, issuer.as_str());
+
+        if jwt_validation_result.is_err() {
+            return Err(JWTAuthenticationError::InvalidToken);
+        }
+
+        let jwt_claims = jwt_validation_result.unwrap();
+
+        let user_fetch_result = self.repository.find_by_id(jwt_claims.custom.user_id);
+
+        if user_fetch_result.is_err() {
+            return Err(JWTAuthenticationError::UserNotFound(
+                jwt_claims.custom.user_id,
+            ));
+        }
+
+        Ok(user_fetch_result.unwrap())
     }
 
     pub fn create_jwt_for_user(&self, user: &User) -> Result<String, Box<dyn Error>> {

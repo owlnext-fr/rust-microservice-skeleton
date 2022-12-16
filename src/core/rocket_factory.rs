@@ -6,7 +6,10 @@ use super::{
     fairings::jwt_certificates::JWTCertificatesFairing,
 };
 use crate::{
-    controllers::{api::auth, app, catchers},
+    controllers::{
+        api::{auth, security_test},
+        app, catchers,
+    },
     domain::repository::{
         refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
     },
@@ -50,7 +53,11 @@ pub fn build() -> Rocket<Build> {
     // -- starting rocket setup --
     //
     if configuration.get_string_or_default("env", "dev") == "dev" {
-        build = build.register("/", catchers![rocket_validation::validation_catcher]);
+        build = build
+            // catcher for invalid JSON input
+            .register("/", catchers![rocket_validation::validation_catcher])
+            // security testing routes
+            .mount("/api/security-test", routes![security_test::test_connected]);
     }
 
     build = build

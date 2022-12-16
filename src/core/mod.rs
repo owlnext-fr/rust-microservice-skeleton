@@ -1,6 +1,7 @@
 pub mod configuration;
 pub mod database;
 pub mod fairings;
+pub mod guards;
 pub mod jwt;
 pub mod macros;
 pub mod password;
