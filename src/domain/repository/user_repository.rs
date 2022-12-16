@@ -1,42 +1,42 @@
 use diesel::{prelude::*, result::Error};
 
-use super::traits::database_enabled_repository_trait::DatabaseEnabledRepositoryTrait;
 use crate::{
-    core::database::DbPoolState,
+    core::database::{DbPoolState, DB},
     domain::{
         model::user::User,
         schema::{
-            user::{is_deleted, login},
+            users::{id, is_deleted, login},
             *,
         },
     },
 };
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct UserRepository {
-    db_conn: Option<DbPoolState>,
-}
-
-impl DatabaseEnabledRepositoryTrait for UserRepository {
-    fn set_db(&mut self, db_conn: DbPoolState) -> &mut Self {
-        self.db_conn = Some(db_conn);
-        self
-    }
-
-    fn get_db(
-        &self,
-    ) -> r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>> {
-        self.db_conn.clone().unwrap().db_pool.get().unwrap()
-    }
+    db_conn: DbPoolState,
 }
 
 impl UserRepository {
+    pub fn new(db_pool: DbPoolState) -> Self {
+        Self { db_conn: db_pool }
+    }
+
+    fn get_db(&self) -> DB {
+        self.db_conn.db_pool.get().unwrap()
+    }
+
     pub fn load_user_by_login(&self, user_login: &str) -> Result<User, Error> {
         let mut conn = self.get_db();
 
-        user::table
+        users::table
             .filter(login.eq(user_login))
             .filter(is_deleted.eq(false))
             .get_result::<User>(&mut conn)
+    }
+
+    pub fn find_by_id(&self, user_id: i32) -> Result<User, Error> {
+        users::table
+            .filter(id.eq(user_id))
+            .get_result::<User>(&mut self.get_db())
     }
 }

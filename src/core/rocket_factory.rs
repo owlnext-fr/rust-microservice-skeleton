@@ -1,36 +1,70 @@
 use rocket::{Build, Rocket};
 
 use super::{
-    configuration,
+    configuration::ConfigState,
     database::{get_connection_pool, DbPoolState},
     fairings::jwt_certificates::JWTCertificatesFairing,
 };
-use crate::controllers::{api::auth, app, catchers};
+use crate::{
+    controllers::{api::auth, app, catchers},
+    domain::repository::{
+        refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
+    },
+    middlewares::{
+        refresh_token_middleware::RefreshTokenMiddleware, user_middleware::UserMiddleware,
+    },
+};
 
+#[allow(clippy::redundant_clone)]
 pub fn build() -> Rocket<Build> {
-    let configuration = configuration::load();
+    //
+    // -- configuration initialisation --
+    //
+    let configuration = ConfigState::load();
 
+    //
+    // -- database initialisation --
+    //
     let db_pool = get_connection_pool(configuration.get_string("database_url").unwrap()).unwrap();
+    let db_state = DbPoolState { db_pool };
 
+    //
+    // -- repository initialisation --
+    //
+    let user_rep = UserRepository::new(db_state.clone());
+    let refresh_token_rep = RefreshTokenRepository::new(db_state.clone());
+
+    //
+    // -- middleware initialisation --
+    //
+    let user_middleware = UserMiddleware::new(user_rep.clone(), configuration.clone());
+    let refresh_token_middleware =
+        RefreshTokenMiddleware::new(refresh_token_rep.clone(), configuration.clone());
+
+    //
+    // -- starting rocket setup --
+    //
     let mut build = rocket::build();
 
-    if configuration
-        .get_string("env")
-        .unwrap_or_else(|_| String::from("prod"))
-        == "dev"
-    {
+    //
+    // -- starting rocket setup --
+    //
+    if configuration.get_string_or_default("env", "dev") == "dev" {
         build = build.register("/", catchers![rocket_validation::validation_catcher]);
     }
 
     build = build
         // routes
         .mount("/", routes![app::index::index])
-        .mount("/api/auth", routes![auth::token])
+        .mount("/api/auth", routes![auth::token, auth::refresh_token])
         // catchers
         .register("/", catchers![catchers::default_catcher])
-        // managed states
+        // managed global states
         .manage(configuration)
-        .manage(DbPoolState { db_pool })
+        .manage(db_state)
+        // managed middlewares
+        .manage(user_middleware)
+        .manage(refresh_token_middleware)
         // fairings
         .attach(JWTCertificatesFairing::default());
 

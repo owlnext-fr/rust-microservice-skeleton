@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate rocket;
+extern crate failure;
 
 pub mod controllers;
 pub mod core;

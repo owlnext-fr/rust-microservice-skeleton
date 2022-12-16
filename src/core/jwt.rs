@@ -3,8 +3,6 @@ use std::{collections::HashSet, error::Error, fs, path::PathBuf};
 use jwt_simple::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use super::configuration;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct APIClaim {
     pub user_id: i32,
@@ -12,15 +10,11 @@ pub struct APIClaim {
     pub username: String,
 }
 
-pub fn encode(claim: APIClaim) -> Result<String, Box<dyn Error>> {
-    let configuration = configuration::load();
-
+pub fn encode(claim: APIClaim, jwt_ttl: i64, issuer: &str) -> Result<String, Box<dyn Error>> {
     let key_pair = RS512KeyPair::from_pem(&get_private_certificate_content()?)?;
 
-    let jwt_ttl = configuration.get_int("jwt_ttl")?.unsigned_abs();
-
-    let claims = Claims::with_custom_claims(claim, Duration::from_secs(jwt_ttl))
-        .with_issuer(configuration.get_string("package.name")?)
+    let claims = Claims::with_custom_claims(claim, Duration::from_secs(jwt_ttl.unsigned_abs()))
+        .with_issuer(issuer)
         .with_subject("authorization");
 
     let token = key_pair.sign(claims)?;
@@ -28,14 +22,12 @@ pub fn encode(claim: APIClaim) -> Result<String, Box<dyn Error>> {
     Ok(token)
 }
 
-pub fn decode(token: &str) -> Result<JWTClaims<APIClaim>, Box<dyn Error>> {
+pub fn decode(token: &str, issuer: &str) -> Result<JWTClaims<APIClaim>, Box<dyn Error>> {
     let public_key = RS512PublicKey::from_pem(&get_public_certificate_content()?)?;
 
     let options = VerificationOptions {
         accept_future: true,
-        allowed_issuers: Some(HashSet::from_strings(&[
-            configuration::load().get_string("package.name")?
-        ])),
+        allowed_issuers: Some(HashSet::from_strings(&[issuer])),
         ..Default::default()
     };
 
@@ -96,15 +88,15 @@ mod tests {
     #[test]
     fn create_jwt() {
         prelude();
-        let jwt_token = encode(create_claim()).unwrap();
+        let jwt_token = encode(create_claim(), 3600, "owlnext").unwrap();
         println!("{}", jwt_token);
     }
 
     #[test]
     fn validate_jwt() {
         prelude();
-        let jwt_token = encode(create_claim()).unwrap();
-        let claims_response = decode(&jwt_token);
+        let jwt_token = encode(create_claim(), 3600, "owlnext").unwrap();
+        let claims_response = decode(&jwt_token, "owlnext");
         assert!(claims_response.is_ok());
         println!("{:#?}", claims_response.unwrap());
     }

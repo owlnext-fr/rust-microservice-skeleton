@@ -20,6 +20,6 @@ pub struct LoginInputDTO {
 #[derive(Serialize, Deserialize, Validate)]
 #[serde(crate = "rocket::serde")]
 pub struct RefreshTokenInputDTO {
-    #[validate(length(min = 1))]
+    #[validate(length(equal = 128))]
     pub refresh_token: String,
 }

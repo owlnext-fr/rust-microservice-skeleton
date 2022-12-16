@@ -4,6 +4,7 @@ pub mod fairings;
 pub mod jwt;
 pub mod macros;
 pub mod password;
+pub mod password_generator;
 pub mod response;
 pub mod rocket_factory;
 pub mod security;
