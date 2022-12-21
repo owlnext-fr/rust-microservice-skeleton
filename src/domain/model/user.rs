@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use diesel::{Identifiable, Queryable};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize, Clone)]
+#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize, Clone, Default)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: i32,

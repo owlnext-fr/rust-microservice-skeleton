@@ -4,6 +4,7 @@ use super::{
     configuration::ConfigState,
     database::{get_connection_pool, DbPoolState},
     fairings::jwt_certificates::JWTCertificatesFairing,
+    security::{Security, SecurityVoter},
 };
 use crate::{
     controllers::{
@@ -45,6 +46,11 @@ pub fn build() -> Rocket<Build> {
         RefreshTokenMiddleware::new(refresh_token_rep.clone(), configuration.clone());
 
     //
+    // -- security --
+    //
+    let security = Security::<dyn SecurityVoter>::new();
+
+    //
     // -- starting rocket setup --
     //
     let mut build = rocket::build();
@@ -57,7 +63,10 @@ pub fn build() -> Rocket<Build> {
             // catcher for invalid JSON input
             .register("/", catchers![rocket_validation::validation_catcher])
             // security testing routes
-            .mount("/api/security-test", routes![security_test::test_connected]);
+            .mount(
+                "/api/security-test",
+                routes![security_test::test_connected, security_test::test_secured],
+            );
     }
 
     build = build
@@ -69,6 +78,7 @@ pub fn build() -> Rocket<Build> {
         // managed global states
         .manage(configuration)
         .manage(db_state)
+        .manage(security)
         // managed middlewares
         .manage(user_middleware)
         .manage(refresh_token_middleware)
