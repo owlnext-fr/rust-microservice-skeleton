@@ -54,10 +54,14 @@ impl<'r> FromRequest<'r> for ConnectedUser {
 
         let jwt_token = *jwt_token_parsed.get(1).unwrap();
 
-        let authenticated_user_result = user_middleware.authenticate_user_from_jwt(jwt_token);
+        let authenticated_user_result =
+            req.local_cache(|| user_middleware.authenticate_user_from_jwt(jwt_token));
 
-        if let Err(authentication_error) = authenticated_user_result {
-            match authentication_error {
+        match authenticated_user_result {
+            Ok(user) => {
+                return Outcome::Success(ConnectedUser { user: user.clone() });
+            }
+            Err(error) => match error {
                 JWTAuthenticationError::InvalidToken => {
                     return Outcome::Failure((
                         Status::Unauthorized,
@@ -67,11 +71,7 @@ impl<'r> FromRequest<'r> for ConnectedUser {
                 JWTAuthenticationError::UserNotFound(_) => {
                     return Outcome::Failure((Status::NotFound, AuthenticationError::UserNotFound));
                 }
-            }
+            },
         }
-
-        Outcome::Success(ConnectedUser {
-            user: authenticated_user_result.unwrap(),
-        })
     }
 }
