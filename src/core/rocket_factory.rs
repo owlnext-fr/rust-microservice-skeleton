@@ -3,7 +3,10 @@ use rocket::{Build, Rocket};
 use super::{
     configuration::ConfigState,
     database::{get_connection_pool, DbPoolState},
-    fairings::jwt_certificates::JWTCertificatesFairing,
+    fairings::{
+        cron_scheduler::CronScheduler, database_migrations::DatabaseMigrations,
+        jwt_certificates::JWTCertificatesFairing,
+    },
     security::{Security, SecurityVoter},
 };
 use crate::{
@@ -12,11 +15,14 @@ use crate::{
         app, catchers,
     },
     domain::repository::{
-        refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
+        cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
+        user_repository::UserRepository,
     },
     middlewares::{
-        refresh_token_middleware::RefreshTokenMiddleware, user_middleware::UserMiddleware,
+        cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
+        user_middleware::UserMiddleware,
     },
+    security::handlers::test_security_handler::TestSecurityHandler,
 };
 
 #[allow(clippy::redundant_clone)]
@@ -29,7 +35,8 @@ pub fn build() -> Rocket<Build> {
     //
     // -- database initialisation --
     //
-    let db_pool = get_connection_pool(configuration.get_string("database_url").unwrap()).unwrap();
+    let db_conn_url = configuration.get_string("database_url").unwrap();
+    let db_pool = get_connection_pool(db_conn_url).unwrap();
     let db_state = DbPoolState { db_pool };
 
     //
@@ -37,6 +44,7 @@ pub fn build() -> Rocket<Build> {
     //
     let user_rep = UserRepository::new(db_state.clone());
     let refresh_token_rep = RefreshTokenRepository::new(db_state.clone());
+    let cron_log_rep = CronLogRepository::new(db_state.clone());
 
     //
     // -- middleware initialisation --
@@ -44,11 +52,21 @@ pub fn build() -> Rocket<Build> {
     let user_middleware = UserMiddleware::new(user_rep.clone(), configuration.clone());
     let refresh_token_middleware =
         RefreshTokenMiddleware::new(refresh_token_rep.clone(), configuration.clone());
+    let cron_log_middleware = CronLogMiddleware::new(cron_log_rep.clone());
+
+    //
+    // -- scheduler initialisation --
+    //
+    let mut sched = CronScheduler::default();
+
+    //
+    // -- adding command schedules --
+    //
 
     //
     // -- security --
     //
-    let security = Security::<dyn SecurityVoter>::new();
+    let mut security = Security::<dyn SecurityVoter>::new();
 
     //
     // -- starting rocket setup --
@@ -67,6 +85,9 @@ pub fn build() -> Rocket<Build> {
                 "/api/security-test",
                 routes![security_test::test_connected, security_test::test_secured],
             );
+
+        // security testing voter
+        security.add_handler(Box::new(TestSecurityHandler::default()));
     }
 
     build = build
@@ -82,8 +103,11 @@ pub fn build() -> Rocket<Build> {
         // managed middlewares
         .manage(user_middleware)
         .manage(refresh_token_middleware)
+        .manage(cron_log_middleware)
         // fairings
-        .attach(JWTCertificatesFairing::default());
+        .attach(DatabaseMigrations::default())
+        .attach(JWTCertificatesFairing::default())
+        .attach(sched);
 
     build
 }

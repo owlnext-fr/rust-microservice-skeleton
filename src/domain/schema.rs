@@ -1,6 +1,18 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    cron_logs (id) {
+        id -> Int4,
+        command -> Varchar,
+        command_args -> Varchar,
+        exit_status -> Nullable<Int4>,
+        exit_message -> Nullable<Text>,
+        started_at -> Timestamptz,
+        ended_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     refresh_token (id) {
         id -> Int4,
         token -> Varchar,
@@ -29,4 +41,4 @@ diesel::table! {
 
 diesel::joinable!(refresh_token -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(refresh_token, users,);
+diesel::allow_tables_to_appear_in_same_query!(cron_logs, refresh_token, users,);

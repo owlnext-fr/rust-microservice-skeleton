@@ -18,7 +18,7 @@ Cargo.lock
 .env.*
 
 # storage
-storage/jwt/*
-
+storage/*/*
+!storage/*/.gitkeep
 # vscode config for local database connector
 .vscode/settings.json

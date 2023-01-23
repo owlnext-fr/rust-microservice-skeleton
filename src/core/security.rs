@@ -2,22 +2,22 @@ use std::collections::HashMap;
 
 use crate::domain::model::user::User;
 
-pub struct Security<T: ?Sized + Send + Sync> {
-    voters: HashMap<String, Box<T>>,
+pub struct Security<'a, T: ?Sized + Send + Sync> {
+    voters: HashMap<&'a str, Box<T>>,
 }
 
-impl<T> Default for Security<T>
+impl<'a, T> Default for Security<'a, T>
 where
-    T: SecurityVoter + ?Sized + Send + Sync,
+    T: SecurityVoter<'a> + ?Sized + Send + Sync,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> Security<T>
+impl<'a, T> Security<'a, T>
 where
-    T: SecurityVoter + ?Sized + Send + Sync,
+    T: SecurityVoter<'a> + ?Sized + Send + Sync,
 {
     pub fn new() -> Self {
         Self {
@@ -38,17 +38,17 @@ where
     }
 
     pub fn has_access(&self, subject: &str, right: &str, user: &User) -> bool {
-        if self.voters.contains_key(subject) {
-            return self.voters.get(subject).unwrap().has_access(right, user);
+        if let Some(voter) = self.voters.get(subject) {
+            return voter.has_access(right, user);
         }
 
         false
     }
 }
 
-pub trait SecurityVoter: Send + Sync {
+pub trait SecurityVoter<'a>: Send + Sync {
     /// Gets the "subject" supported by the voter
-    fn supports(&self) -> String;
+    fn supports(&self) -> &'a str;
     /// Takes a given right and a user, and checks if the user has_access to the action represented by the right.
     fn has_access(&self, right: &str, user: &User) -> bool;
 }
@@ -60,9 +60,9 @@ mod tests {
     #[derive(Default)]
     struct TestSecurityHandler {}
 
-    impl SecurityVoter for TestSecurityHandler {
-        fn supports(&self) -> String {
-            "test".to_string()
+    impl<'a> SecurityVoter<'a> for TestSecurityHandler {
+        fn supports(&self) -> &'a str {
+            "test"
         }
 
         fn has_access(&self, right: &str, _user: &User) -> bool {
@@ -77,9 +77,9 @@ mod tests {
     #[derive(Default)]
     struct STestSecurityHandler {}
 
-    impl SecurityVoter for STestSecurityHandler {
-        fn supports(&self) -> String {
-            "test 2".to_string()
+    impl<'a> SecurityVoter<'a> for STestSecurityHandler {
+        fn supports(&self) -> &'a str {
+            "test 2"
         }
 
         fn has_access(&self, right: &str, _user: &User) -> bool {

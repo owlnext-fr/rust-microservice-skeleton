@@ -9,6 +9,7 @@ pub type PostgresPool = Pool<ConnectionManager<PgConnection>>;
 
 pub fn get_connection_pool(conn_url: String) -> Result<PostgresPool, Box<dyn Error>> {
     let migr = ConnectionManager::<PgConnection>::new(conn_url);
+
     let pool = r2d2::Pool::builder().build(migr)?;
 
     Ok(pool)
