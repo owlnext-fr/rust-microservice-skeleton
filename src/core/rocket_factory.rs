@@ -57,11 +57,19 @@ pub fn build() -> Rocket<Build> {
     //
     // -- scheduler initialisation --
     //
-    let mut sched = CronScheduler::default();
+    let sched = CronScheduler::default();
 
     //
-    // -- adding command schedules --
+    // -- scheduler setup --
     //
+    //sched.add_cron(CommandHandle {
+    //    command: Box::new(TestCommand {
+    //        name: "app:test".to_string(),
+    //        args: None,
+    //        cron_log_middleware: cron_log_middleware.clone(),
+    //    }),
+    //    schedule: "*/1 * * * *".to_string(),
+    //});
 
     //
     // -- security --

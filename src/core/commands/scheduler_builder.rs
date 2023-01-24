@@ -4,7 +4,7 @@ pub struct SchedulerBuilder {}
 
 impl SchedulerBuilder {
     pub async fn build() -> JobScheduler {
-        let mut sched = JobScheduler::new().await.unwrap();
+        let sched = JobScheduler::new().await.unwrap();
 
         sched.shutdown_on_ctrl_c();
 

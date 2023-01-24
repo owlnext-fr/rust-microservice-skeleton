@@ -26,3 +26,4 @@ rand_core = { version = "0.6", features = ["std"] }
 tokio-cron-scheduler = {version = "0.8.1", features = ["signal"]}
 anyhow = "1.0.68"
 md5 = "0.7.0"
+tokio-test = "0.4.2"
