@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use anyhow::Result;
 
@@ -51,7 +51,7 @@ pub trait Command: Send + Sync {
     async fn end(&self, cron_log: &CronLog, result: CommandResult) -> Result<()> {
         let key = self.generate_unicity_key();
 
-        FileLock::try_aquire(key.as_str()).await?;
+        FileLock::try_release(key.as_str()).await?;
 
         let mut exit_status = 0;
         let mut exit_message = None;
@@ -86,7 +86,6 @@ pub trait Command: Send + Sync {
         }
 
         let command_result = result.unwrap();
-
         self.end(&cron_log, command_result).await?;
 
         Ok(())
@@ -112,6 +111,18 @@ pub trait Command: Send + Sync {
 
 /// struct to move a command + its cron schedule into scheduler.
 pub struct CommandHandle<T: Command + ?Sized + Send + Sync> {
-    pub command: Box<T>,
+    pub command: Arc<T>,
     pub schedule: String,
+}
+
+impl<T> Clone for CommandHandle<T>
+where
+    T: Command + ?Sized + Send + Sync,
+{
+    fn clone(&self) -> Self {
+        Self {
+            command: self.command.clone(),
+            schedule: self.schedule.clone(),
+        }
+    }
 }

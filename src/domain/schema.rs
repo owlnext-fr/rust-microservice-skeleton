@@ -1,6 +1,29 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    account (id) {
+        id -> Int4,
+        name -> Varchar,
+        created_date -> Timestamptz,
+        deleted_date -> Nullable<Timestamptz>,
+        is_deleted -> Bool,
+    }
+}
+
+diesel::table! {
+    application (id) {
+        id -> Int4,
+        ulid -> Varchar,
+        name -> Varchar,
+        contact_email -> Varchar,
+        account_id -> Int4,
+        created_date -> Timestamptz,
+        deleted_date -> Nullable<Timestamptz>,
+        is_deleted -> Bool,
+    }
+}
+
+diesel::table! {
     cron_logs (id) {
         id -> Int4,
         command -> Varchar,
@@ -39,6 +62,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(application -> account (account_id));
 diesel::joinable!(refresh_token -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(cron_logs, refresh_token, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    account,
+    application,
+    cron_logs,
+    refresh_token,
+    users,
+);

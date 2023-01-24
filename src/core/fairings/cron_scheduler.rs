@@ -35,9 +35,15 @@ impl Fairing for CronScheduler {
         let sched = SchedulerBuilder::build().await;
 
         for handle in self.crons.iter() {
-            let job = Job::new_cron_job_async(handle.schedule.as_str(), |_uid, _lock| {
+            let schedule = handle.schedule.clone();
+
+            let handle = handle.clone();
+            debug!("{schedule}");
+            let job = Job::new_cron_job_async(schedule.as_str(), move |_uid, _lock| {
+                let handle = handle.clone();
+
                 Box::pin(async move {
-                    //handle.command.run().await;
+                    handle.command.run().await.unwrap();
                 })
             })
             .unwrap();
