@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use failure::Fail;
 
 use crate::{
@@ -83,7 +81,7 @@ impl UserMiddleware<UserRepository> {
         Ok(user_fetch_result.unwrap())
     }
 
-    pub fn create_jwt_for_user(&self, user: &User) -> Result<String, Box<dyn Error>> {
+    pub fn create_jwt_for_user(&self, user: &User) -> anyhow::Result<String> {
         let claim = jwt::APIClaim {
             user_id: user.id,
             roles: user.roles.clone(),

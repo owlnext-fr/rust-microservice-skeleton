@@ -1,4 +1,4 @@
-use diesel::{prelude::*, result::Error};
+use diesel::prelude::*;
 
 use crate::{
     core::database::{DbPoolState, DB},
@@ -10,6 +10,8 @@ use crate::{
         },
     },
 };
+
+use anyhow::Result;
 
 #[derive(Clone)]
 pub struct UserRepository {
@@ -25,18 +27,20 @@ impl UserRepository {
         self.db_conn.db_pool.get().unwrap()
     }
 
-    pub fn load_user_by_login(&self, user_login: &str) -> Result<User, Error> {
-        let mut conn = self.get_db();
-
-        users::table
+    pub fn load_user_by_login(&self, user_login: &str) -> Result<User> {
+        let user = users::table
             .filter(login.eq(user_login))
             .filter(is_deleted.eq(false))
-            .get_result::<User>(&mut conn)
+            .get_result::<User>(&mut self.get_db())?;
+
+        Ok(user)
     }
 
-    pub fn find_by_id(&self, user_id: i32) -> Result<User, Error> {
-        users::table
+    pub fn find_by_id(&self, user_id: i32) -> Result<User> {
+        let user = users::table
             .filter(id.eq(user_id))
-            .get_result::<User>(&mut self.get_db())
+            .get_result::<User>(&mut self.get_db())?;
+
+        Ok(user)
     }
 }

@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use chrono::{Duration, Utc};
 use failure::Fail;
 
@@ -33,7 +31,7 @@ impl RefreshTokenMiddleware<RefreshTokenRepository> {
         Self { repository, config }
     }
 
-    pub fn generate_for_user(&self, user: &User) -> Result<RefreshToken, Box<dyn Error>> {
+    pub fn generate_for_user(&self, user: &User) -> anyhow::Result<RefreshToken> {
         let token = password::generate_simple_sized(128);
         let refresh_ttl = self.config.get_int_or_default("jwt_refresh_ttl", 86400);
         let validity_date = Utc::now() + Duration::seconds(refresh_ttl);

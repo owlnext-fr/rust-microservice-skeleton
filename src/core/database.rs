@@ -1,4 +1,4 @@
-use std::error::Error;
+use anyhow::Result;
 
 use diesel::{r2d2::ConnectionManager, PgConnection};
 use failure::Fail;
@@ -7,7 +7,7 @@ use r2d2::Pool;
 pub type DB = r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>;
 pub type PostgresPool = Pool<ConnectionManager<PgConnection>>;
 
-pub fn get_connection_pool(conn_url: String) -> Result<PostgresPool, Box<dyn Error>> {
+pub fn get_connection_pool(conn_url: String) -> Result<PostgresPool> {
     let migr = ConnectionManager::<PgConnection>::new(conn_url);
 
     let pool = r2d2::Pool::builder().build(migr)?;

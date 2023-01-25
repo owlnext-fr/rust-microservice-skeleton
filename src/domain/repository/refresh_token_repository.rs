@@ -5,7 +5,9 @@ use crate::{
         schema::{refresh_token::token, *},
     },
 };
-use diesel::{prelude::*, result::Error};
+use diesel::prelude::*;
+
+use anyhow::Result;
 
 #[derive(Clone)]
 pub struct RefreshTokenRepository {
@@ -21,7 +23,7 @@ impl RefreshTokenRepository {
         self.db_conn.db_pool.get().unwrap()
     }
 
-    pub fn insert(&self, new_refresh_token: NewRefreshToken) -> Result<RefreshToken, Error> {
+    pub fn insert(&self, new_refresh_token: NewRefreshToken) -> Result<RefreshToken> {
         let refresh_token = diesel::insert_into(refresh_token::table)
             .values(&new_refresh_token)
             .get_result(&mut self.get_db())?;
@@ -29,9 +31,11 @@ impl RefreshTokenRepository {
         Ok(refresh_token)
     }
 
-    pub fn find_by_token(&self, refresh_token: &str) -> Result<RefreshToken, Error> {
-        refresh_token::table
+    pub fn find_by_token(&self, refresh_token: &str) -> Result<RefreshToken> {
+        let refresh_token = refresh_token::table
             .filter(token.eq(refresh_token))
-            .get_result::<RefreshToken>(&mut self.get_db())
+            .get_result::<RefreshToken>(&mut self.get_db())?;
+
+        Ok(refresh_token)
     }
 }

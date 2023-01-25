@@ -1,3 +1,4 @@
+use anyhow::Result;
 use config::Config;
 use rocket::serde::Serialize;
 
@@ -19,8 +20,10 @@ impl ConfigState {
         Self { configuration }
     }
 
-    pub fn get_string(&self, key: &str) -> Result<String, config::ConfigError> {
-        self.configuration.get_string(key)
+    pub fn get_string(&self, key: &str) -> Result<String> {
+        let value = self.configuration.get_string(key)?;
+
+        Ok(value)
     }
 
     pub fn get_string_or_default(&self, key: &str, default: &str) -> String {

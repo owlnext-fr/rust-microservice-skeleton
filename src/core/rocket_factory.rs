@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
 use rocket::{Build, Rocket};
 
 use super::{
-    commands::command::CommandHandle,
     configuration::ConfigState,
     database::{get_connection_pool, DbPoolState},
     fairings::{
@@ -13,7 +10,6 @@ use super::{
     security::{Security, SecurityVoter},
 };
 use crate::{
-    commands::test_command::TestCommand,
     controllers::{
         api::{auth, security_test},
         app, catchers,
@@ -61,19 +57,20 @@ pub fn build() -> Rocket<Build> {
     //
     // -- scheduler initialisation --
     //
+    #[allow(unused_mut)]
     let mut sched = CronScheduler::default();
 
     //
     // -- scheduler setup --
     //
-    sched.add_cron(CommandHandle {
-        command: Arc::new(TestCommand {
-            name: "app:test".to_string(),
-            args: None,
-            cron_log_middleware: cron_log_middleware.clone(),
-        }),
-        schedule: "*/5 * * * * * *".to_string(),
-    });
+    // sched.add_cron(CommandHandle {
+    //     command: Arc::new(TestCommand {
+    //         name: "app:test".to_string(),
+    //         args: None,
+    //         cron_log_middleware: cron_log_middleware.clone(),
+    //     }),
+    //     schedule: "*/5 * * * * * *".to_string(),
+    // });
 
     //
     // -- security --
