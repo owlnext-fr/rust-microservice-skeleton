@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rocket::{Build, Rocket};
 
 use super::{
@@ -5,7 +7,7 @@ use super::{
     database::{get_connection_pool, DbPoolState},
     fairings::{
         cron_scheduler::CronScheduler, database_migrations::DatabaseMigrations,
-        jwt_certificates::JWTCertificatesFairing,
+        fixture::FixtureLoader, jwt_certificates::JWTCertificatesFairing,
     },
     security::{Security, SecurityVoter},
 };
@@ -15,10 +17,13 @@ use crate::{
         app, catchers,
     },
     domain::repository::{
+        account_repository::AccountRepository, application_repository::ApplicationRepository,
         cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
         user_repository::UserRepository,
     },
+    fixtures::init_fixture::InitFixture,
     middlewares::{
+        account_middleware::AccountMiddleware, application_middleware::ApplicationMiddleware,
         cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
         user_middleware::UserMiddleware,
     },
@@ -45,6 +50,8 @@ pub fn build() -> Rocket<Build> {
     let user_rep = UserRepository::new(db_state.clone());
     let refresh_token_rep = RefreshTokenRepository::new(db_state.clone());
     let cron_log_rep = CronLogRepository::new(db_state.clone());
+    let application_rep = ApplicationRepository::new(db_state.clone());
+    let account_rep = AccountRepository::new(db_state.clone());
 
     //
     // -- middleware initialisation --
@@ -53,6 +60,8 @@ pub fn build() -> Rocket<Build> {
     let refresh_token_middleware =
         RefreshTokenMiddleware::new(refresh_token_rep.clone(), configuration.clone());
     let cron_log_middleware = CronLogMiddleware::new(cron_log_rep.clone());
+    let application_middleware = ApplicationMiddleware::new(application_rep.clone());
+    let account_middleware = AccountMiddleware::new(account_rep.clone());
 
     //
     // -- scheduler initialisation --
@@ -76,6 +85,18 @@ pub fn build() -> Rocket<Build> {
     // -- security --
     //
     let mut security = Security::<dyn SecurityVoter>::new();
+
+    //
+    // -- fixtures --
+    //
+    let mut fixture_loader = FixtureLoader::default();
+
+    fixture_loader.add_fixture(Arc::new(InitFixture::new(
+        account_middleware.clone(),
+        application_middleware.clone(),
+        user_middleware.clone(),
+        configuration.clone(),
+    )));
 
     //
     // -- starting rocket setup --
@@ -113,10 +134,13 @@ pub fn build() -> Rocket<Build> {
         .manage(user_middleware)
         .manage(refresh_token_middleware)
         .manage(cron_log_middleware)
+        .manage(application_middleware)
+        .manage(account_middleware)
         // fairings
         .attach(DatabaseMigrations::default())
         .attach(JWTCertificatesFairing::default())
-        .attach(sched);
+        .attach(sched)
+        .attach(fixture_loader);
 
     build
 }

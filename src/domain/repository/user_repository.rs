@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use crate::{
     core::database::{DbPoolState, DB},
     domain::{
-        model::user::User,
+        model::user::{NewUser, User},
         schema::{
             users::{id, is_deleted, login},
             *,
@@ -40,6 +40,22 @@ impl UserRepository {
         let user = users::table
             .filter(id.eq(user_id))
             .get_result::<User>(&mut self.get_db())?;
+
+        Ok(user)
+    }
+
+    pub fn find_by_login(&self, user_login: &str) -> Result<User> {
+        let user = users::table
+            .filter(login.eq(user_login))
+            .get_result::<User>(&mut self.get_db())?;
+
+        Ok(user)
+    }
+
+    pub fn insert(&self, new_user: NewUser) -> Result<User> {
+        let user = diesel::insert_into(users::table)
+            .values(&new_user)
+            .get_result(&mut self.get_db())?;
 
         Ok(user)
     }

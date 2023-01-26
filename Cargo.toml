@@ -27,3 +27,4 @@ tokio-cron-scheduler = {version = "0.9.1", features = ["signal"]}
 anyhow = {version = "1.0.68", features = ["backtrace"] }
 md5 = "0.7.0"
 tokio-test = "0.4.2"
+ulid = "1.0.0"

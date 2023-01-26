@@ -1,9 +1,9 @@
 use crate::domain::schema::*;
 use chrono::{DateTime, Utc};
-use diesel::{Identifiable, Insertable, Queryable};
+use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize, Clone, Default, AsChangeset)]
 #[diesel(table_name = cron_logs)]
 pub struct CronLog {
     pub id: i32,

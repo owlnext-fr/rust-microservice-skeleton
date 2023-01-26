@@ -1,9 +1,17 @@
+use argon2::password_hash::SaltString;
 use failure::Fail;
 
 use crate::{
-    core::{configuration::ConfigState, database::DBRequestResultError, jwt, password},
+    core::{
+        configuration::ConfigState,
+        database::DBRequestResultError,
+        jwt,
+        password::{self, generate_salt, hash},
+    },
     domain::{
-        dto::auth::LoginInputDTO, model::user::User, repository::user_repository::UserRepository,
+        dto::auth::LoginInputDTO,
+        model::user::{NewUser, User},
+        repository::user_repository::UserRepository,
     },
 };
 
@@ -23,7 +31,7 @@ pub enum JWTAuthenticationError {
     UserNotFound(i32),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct UserMiddleware<UserRepository> {
     repository: UserRepository,
     configuration: ConfigState,
@@ -104,5 +112,35 @@ impl UserMiddleware<UserRepository> {
         }
 
         Ok(user_found.unwrap())
+    }
+
+    pub fn find_by_login(&self, login: &str) -> anyhow::Result<User> {
+        let user = self.repository.find_by_login(login)?;
+
+        Ok(user)
+    }
+
+    pub fn create(&self, new_user: NewUser) -> anyhow::Result<User> {
+        let mut new_user = new_user.clone();
+
+        let maybe_clear_password = new_user.password;
+        let new_salt = generate_salt();
+
+        if new_user.salt.is_none() {
+            new_user.salt = Some(new_salt.as_str());
+        }
+
+        let hashed_password = hash(
+            maybe_clear_password,
+            SaltString::new(new_user.salt.unwrap()).unwrap(),
+        );
+
+        if !maybe_clear_password.starts_with('$') {
+            new_user.password = hashed_password.as_str();
+        }
+
+        let user = self.repository.insert(new_user)?;
+
+        Ok(user)
     }
 }

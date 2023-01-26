@@ -9,6 +9,7 @@ pub mod controllers;
 pub mod core;
 pub mod domain;
 pub mod exceptions;
+pub mod fixtures;
 pub mod middlewares;
 pub mod security;
 

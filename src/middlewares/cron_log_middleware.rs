@@ -34,9 +34,11 @@ impl CronLogMiddleware<CronLogRepository> {
         exit_status: i32,
         exit_message: Option<String>,
     ) -> Result<CronLog> {
-        let log = self
-            .repository
-            .update_from_completion(cron_log, exit_status, exit_message)?;
+        let mut updated_cron_log = cron_log.clone();
+        updated_cron_log.exit_status = Some(exit_status);
+        updated_cron_log.exit_message = exit_message;
+
+        let log = self.repository.update(cron_log)?;
 
         Ok(log)
     }

@@ -54,6 +54,7 @@ diesel::table! {
         roles -> Array<Text>,
         password -> Text,
         salt -> Nullable<Text>,
+        application_id -> Int4,
         created_date -> Timestamptz,
         created_by -> Nullable<Int4>,
         deleted_date -> Nullable<Timestamptz>,
@@ -64,6 +65,7 @@ diesel::table! {
 
 diesel::joinable!(application -> account (account_id));
 diesel::joinable!(refresh_token -> users (user_id));
+diesel::joinable!(users -> application (application_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     account,
