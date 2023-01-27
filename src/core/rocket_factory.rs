@@ -3,15 +3,17 @@ use std::sync::Arc;
 use rocket::{Build, Rocket};
 
 use super::{
+    commands::console_command_registry::ConsoleCommandRegistry,
     configuration::ConfigState,
     database::{get_connection_pool, DbPoolState},
     fairings::{
-        cron_scheduler::CronScheduler, database_migrations::DatabaseMigrations,
-        fixture::FixtureLoader, jwt_certificates::JWTCertificatesFairing,
+        database_migrations::DatabaseMigrations, fixture::FixtureLoader,
+        jwt_certificates::JWTCertificatesFairing,
     },
     security::{Security, SecurityVoter},
 };
 use crate::{
+    commands::test_command::TestCommand,
     controllers::{
         api::{auth, security_test},
         app, catchers,
@@ -21,7 +23,6 @@ use crate::{
         cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
         user_repository::UserRepository,
     },
-    fixtures::init_fixture::InitFixture,
     middlewares::{
         account_middleware::AccountMiddleware, application_middleware::ApplicationMiddleware,
         cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
@@ -64,22 +65,15 @@ pub fn build() -> Rocket<Build> {
     let account_middleware = AccountMiddleware::new(account_rep.clone());
 
     //
-    // -- scheduler initialisation --
+    // -- command registry initialization --
     //
     #[allow(unused_mut)]
-    let mut sched = CronScheduler::default();
+    let mut command_registry = ConsoleCommandRegistry::new();
 
     //
-    // -- scheduler setup --
+    // -- command registry insertions --
     //
-    // sched.add_cron(CommandHandle {
-    //     command: Arc::new(TestCommand {
-    //         name: "app:test".to_string(),
-    //         args: None,
-    //         cron_log_middleware: cron_log_middleware.clone(),
-    //     }),
-    //     schedule: "*/5 * * * * * *".to_string(),
-    // });
+    command_registry.add(Arc::new(TestCommand::new(cron_log_middleware.clone())));
 
     //
     // -- security --
@@ -90,13 +84,7 @@ pub fn build() -> Rocket<Build> {
     // -- fixtures --
     //
     let mut fixture_loader = FixtureLoader::default();
-
-    fixture_loader.add_fixture(Arc::new(InitFixture::new(
-        account_middleware.clone(),
-        application_middleware.clone(),
-        user_middleware.clone(),
-        configuration.clone(),
-    )));
+    // fixture_loader.add_fixture(Arc::new(...));
 
     //
     // -- starting rocket setup --
@@ -124,12 +112,14 @@ pub fn build() -> Rocket<Build> {
         // routes
         .mount("/", routes![app::index::index])
         .mount("/api/auth", routes![auth::token, auth::refresh_token])
+        .mount("/api", routes![])
         // catchers
         .register("/", catchers![catchers::default_catcher])
         // managed global states
         .manage(configuration)
         .manage(db_state)
         .manage(security)
+        .manage(command_registry)
         // managed middlewares
         .manage(user_middleware)
         .manage(refresh_token_middleware)
@@ -139,7 +129,6 @@ pub fn build() -> Rocket<Build> {
         // fairings
         .attach(DatabaseMigrations::default())
         .attach(JWTCertificatesFairing::default())
-        .attach(sched)
         .attach(fixture_loader);
 
     build

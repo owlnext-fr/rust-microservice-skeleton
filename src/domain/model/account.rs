@@ -1,9 +1,19 @@
 use crate::domain::schema::*;
 use chrono::{DateTime, Utc};
-use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
+use diesel::{AsChangeset, Identifiable, Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize, Clone, Default, AsChangeset)]
+#[derive(
+    Debug,
+    Queryable,
+    Identifiable,
+    Serialize,
+    Deserialize,
+    Clone,
+    Default,
+    AsChangeset,
+    QueryableByName,
+)]
 #[diesel(table_name = account)]
 pub struct Account {
     pub id: i32,

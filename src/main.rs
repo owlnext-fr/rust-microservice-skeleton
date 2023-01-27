@@ -1,6 +1,13 @@
+use crate::core::launcher::{self, Command, CLI};
+
+use anyhow::Result;
+
+use clap::Parser;
+
 #[macro_use]
 extern crate rocket;
 extern crate anyhow;
+extern crate clap;
 extern crate diesel_migrations;
 extern crate failure;
 
@@ -13,7 +20,16 @@ pub mod fixtures;
 pub mod middlewares;
 pub mod security;
 
-#[launch]
-fn launch() -> _ {
-    core::rocket_factory::build()
+#[rocket::main]
+async fn main() -> Result<()> {
+    let cli = CLI::parse();
+
+    let rocket = core::rocket_factory::build();
+
+    match &cli.command {
+        Command::Launch => launcher::engage(rocket).await?,
+        Command::Console { sub_command, args } => launcher::warp(rocket, sub_command, args).await?,
+    }
+
+    Ok(())
 }

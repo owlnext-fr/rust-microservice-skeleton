@@ -20,8 +20,8 @@ Cargo.lock
 # storage
 storage/*/*
 !storage/*/.gitkeep
-public_storage/*
-!public_storage/.gitkeep
+public_storage/*/*
+!public_storage/*/.gitkeep
 
 # vscode config for local database connector
 .vscode/settings.json

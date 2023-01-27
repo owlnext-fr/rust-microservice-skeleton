@@ -1,9 +1,12 @@
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_query};
 
 use crate::{
     core::database::{DbPoolState, DB},
     domain::{
-        model::account::{Account, NewAccount},
+        model::{
+            account::{Account, NewAccount},
+            user::User,
+        },
         schema::account::{self, name},
     },
 };
@@ -38,5 +41,18 @@ impl AccountRepository {
             .get_result::<Account>(&mut self.get_db())?;
 
         Ok(account)
+    }
+
+    pub fn find_for_user(&self, user: &User) -> Result<Vec<Account>> {
+        let accounts = sql_query(
+            "
+            SELECT *
+            FROM 
+
+        ",
+        )
+        .load(&mut self.get_db())?;
+
+        Ok(accounts)
     }
 }

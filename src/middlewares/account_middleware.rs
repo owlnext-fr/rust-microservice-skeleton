@@ -1,5 +1,8 @@
 use crate::domain::{
-    model::account::{Account, NewAccount},
+    model::{
+        account::{Account, NewAccount},
+        user::User,
+    },
     repository::account_repository::AccountRepository,
 };
 
@@ -25,5 +28,11 @@ impl AccountMiddleware<AccountRepository> {
         let account = self.repository.find_one_by_name(name)?;
 
         Ok(account)
+    }
+
+    pub fn list_account_for_user(&self, user: &User) -> Result<Vec<Account>> {
+        let accounts = self.repository.find_for_user(user)?;
+
+        Ok(accounts)
     }
 }

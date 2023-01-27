@@ -4,6 +4,7 @@ pub mod database;
 pub mod fairings;
 pub mod guards;
 pub mod jwt;
+pub mod launcher;
 pub mod macros;
 pub mod password;
 pub mod password_generator;

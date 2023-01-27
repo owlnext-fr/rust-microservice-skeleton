@@ -1,3 +1,3 @@
-pub mod command;
+pub mod console_command;
+pub mod console_command_registry;
 pub mod lock;
-pub mod scheduler_builder;
