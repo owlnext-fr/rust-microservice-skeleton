@@ -1,3 +1,4 @@
+use rocket::form::Shareable;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response;

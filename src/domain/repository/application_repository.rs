@@ -1,9 +1,12 @@
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_query, sql_types::Integer};
 
 use crate::{
     core::database::{DbPoolState, DB},
     domain::{
-        model::application::{Application, NewApplication},
+        model::{
+            application::{Application, NewApplication},
+            user::User,
+        },
         schema::*,
     },
 };
@@ -30,5 +33,21 @@ impl ApplicationRepository {
             .get_result(&mut self.get_db())?;
 
         Ok(account)
+    }
+
+    pub fn find_one_for_user(&self, user: &User) -> Result<Option<Application>> {
+        let application = sql_query(
+            "
+            SELECT *
+            FROM application app
+            WHERE app.is_deleted = false
+            AND app.id = $1
+        ",
+        )
+        .bind::<Integer, _>(user.id)
+        .get_result(&mut self.get_db())
+        .optional()?;
+
+        Ok(application)
     }
 }

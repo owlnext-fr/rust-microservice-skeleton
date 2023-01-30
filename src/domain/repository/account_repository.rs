@@ -1,4 +1,4 @@
-use diesel::{prelude::*, sql_query};
+use diesel::{prelude::*, sql_query, sql_types::Integer};
 
 use crate::{
     core::database::{DbPoolState, DB},
@@ -43,16 +43,41 @@ impl AccountRepository {
         Ok(account)
     }
 
-    pub fn find_for_user(&self, user: &User) -> Result<Vec<Account>> {
+    pub fn find_all_for_user(&self, user: &User, page: i32, per_page: i32) -> Result<Vec<Account>> {
+        let offset = (page - 1) * per_page;
+
         let accounts = sql_query(
             "
             SELECT *
-            FROM 
-
+            FROM account ac
+            INNER JOIN application app ON app.account_id = ac.id AND app.id = $1 AND app.is_deleted = false
+            WHERE ac.is_deleted = false
+            LIMIT $2
+            OFFSET $3
         ",
         )
+        .bind::<Integer, _>(user.id)
+        .bind::<Integer, _>(per_page)
+        .bind::<Integer, _>(offset)
         .load(&mut self.get_db())?;
 
         Ok(accounts)
+    }
+
+    pub fn find_for_user(&self, id: i32, user: &User) -> Result<Option<Account>> {
+        let account = sql_query(
+            "
+            SELECT *
+            FROM account ac
+            INNER JOIN application app ON app.account_id = ac.id AND app.id = $1 AND app.is_deleted = false
+            WHERE ac.is_deleted = false
+            AND ac.id = $2
+        ",
+        )
+        .bind::<Integer, _>(user.id)
+        .bind::<Integer, _>(id)
+        .get_result(&mut self.get_db()).optional()?;
+
+        Ok(account)
     }
 }

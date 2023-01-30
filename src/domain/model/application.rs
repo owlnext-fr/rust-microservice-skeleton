@@ -1,6 +1,6 @@
 use crate::domain::schema::*;
 use chrono::{DateTime, Utc};
-use diesel::{AsChangeset, Associations, Identifiable, Insertable, Queryable};
+use diesel::{AsChangeset, Associations, Identifiable, Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
 
 use super::account::Account;
@@ -15,6 +15,7 @@ use super::account::Account;
     Default,
     AsChangeset,
     Associations,
+    QueryableByName,
 )]
 #[diesel(belongs_to(Account, foreign_key = account_id))]
 #[diesel(table_name = application)]

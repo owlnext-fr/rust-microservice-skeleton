@@ -15,7 +15,7 @@ use super::{
 use crate::{
     commands::test_command::TestCommand,
     controllers::{
-        api::{auth, security_test},
+        api::{account, auth, security_test},
         app, catchers,
     },
     domain::repository::{
@@ -31,7 +31,7 @@ use crate::{
     security::handlers::test_security_handler::TestSecurityHandler,
 };
 
-#[allow(clippy::redundant_clone)]
+#[allow(clippy::redundant_clone, unused_mut)]
 pub fn build() -> Rocket<Build> {
     //
     // -- configuration initialisation --
@@ -105,14 +105,17 @@ pub fn build() -> Rocket<Build> {
             );
 
         // security testing voter
-        security.add_handler(Box::new(TestSecurityHandler::default()));
+        security.add_handler(Box::<TestSecurityHandler>::default());
     }
 
     build = build
         // routes
         .mount("/", routes![app::index::index])
         .mount("/api/auth", routes![auth::token, auth::refresh_token])
-        .mount("/api", routes![])
+        .mount(
+            "/api",
+            routes![account::account_list, account::account_details],
+        )
         // catchers
         .register("/", catchers![catchers::default_catcher])
         // managed global states

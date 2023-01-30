@@ -62,7 +62,7 @@ fn get_lock_file_path(key: &str) -> PathBuf {
     let formatted_key = generate_lock_key(key);
 
     let mut lock_possible_path = get_lock_dir();
-    lock_possible_path.push(format!("{}.lock", formatted_key));
+    lock_possible_path.push(format!("{formatted_key}.lock"));
 
     lock_possible_path
 }
