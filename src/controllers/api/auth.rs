@@ -1,4 +1,4 @@
-use rocket::{http::Status, serde::json::Json, State};
+use rocket::{http::Status, serde::json::Json, Request, State};
 use rocket_validation::Validated;
 
 use crate::{
@@ -67,7 +67,7 @@ pub fn refresh_token(
                 return Err(ApiResponse::from_status(Status::NotFound));
             }
             JWTRefreshTokenValidationError::Expired(_) => {
-                return Err(ApiResponse::from_status_with_message(
+                return Err(ApiResponse::from_status_with_reason(
                     Status::BadRequest,
                     "token expired".into(),
                 ));

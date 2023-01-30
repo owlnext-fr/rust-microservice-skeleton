@@ -4,6 +4,8 @@ use rocket::{
     Request,
 };
 
+use crate::core::response::ErrorMessage;
+
 const DEFAULT_PAGE: u16 = 0;
 const DEFAULT_PER_PAGE: u16 = 25;
 
@@ -33,6 +35,9 @@ impl<'r> FromRequest<'r> for Pagination {
 
         if let Some(parsed_page) = query_page {
             if parsed_page.is_err() {
+                req.local_cache(|| ErrorMessage {
+                    message: "error on page".into(),
+                });
                 return Outcome::Failure((Status::BadRequest, PaginationError::PageParseError));
             }
 

@@ -1,4 +1,3 @@
-use rocket::form::Shareable;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response;
@@ -32,20 +31,17 @@ impl<T> ApiResponse<T> {
 impl ApiResponse<HttpException> {
     pub fn from_status(status: Status) -> Self {
         ApiResponse {
-            json: Json(HttpException {
-                code: status.code,
-                message: status.reason_lossy().to_string(),
-            }),
+            json: Json(HttpException::from_status(status)),
             status,
         }
     }
 
-    pub fn from_status_with_message(status: Status, message: String) -> Self {
+    pub fn from_status_with_reason(status: Status, reason: &str) -> Self {
         ApiResponse {
-            json: Json(HttpException {
-                code: status.code,
-                message,
-            }),
+            json: Json(HttpException::from_status_with_reason(
+                status,
+                Some(reason.into()),
+            )),
             status,
         }
     }
@@ -77,4 +73,9 @@ impl<'r, T: serde::Serialize> Responder<'r, 'r> for ApiResponse<T> {
             .header(ContentType::JSON)
             .ok()
     }
+}
+
+#[derive(Default, Debug)]
+pub struct ErrorMessage {
+    pub message: String,
 }
