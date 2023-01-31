@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     commands::test_command::TestCommand,
-    controllers::api::{account, auth, security_test},
+    controllers::api::{account, application, auth, security_test},
     domain::repository::{
         account_repository::AccountRepository, application_repository::ApplicationRepository,
         cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
@@ -21,6 +21,7 @@ use crate::{
         cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
         user_middleware::UserMiddleware,
     },
+    security::handlers::application_security::ApplicationSecurityVoter,
 };
 use crate::{controllers::app, security::handlers::account_security::AccountSecurityVoter};
 use crate::{core::catcher, security::handlers::test_security::TestSecurityVoter};
@@ -76,6 +77,7 @@ pub fn build() -> Rocket<Build> {
     //
     let mut security = Security::<dyn SecurityVoter>::new();
     security.add_voter(Box::<AccountSecurityVoter>::default());
+    security.add_voter(Box::<ApplicationSecurityVoter>::default());
 
     //
     // -- fixtures --
@@ -109,7 +111,12 @@ pub fn build() -> Rocket<Build> {
         .mount("/api/auth", routes![auth::token, auth::refresh_token])
         .mount(
             "/api",
-            routes![account::account_list, account::account_details],
+            routes![
+                account::account_list,
+                account::account_details,
+                application::application_list,
+                application::application_details
+            ],
         )
         // catchers
         .register("/", catchers![catcher::default_catcher])

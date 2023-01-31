@@ -31,12 +31,7 @@ impl AccountMiddleware {
         Ok(account)
     }
 
-    pub fn list_account_for_user(
-        &self,
-        user: &User,
-        page: u16,
-        per_page: u16,
-    ) -> Result<Vec<Account>> {
+    pub fn find_for_user(&self, user: &User, page: u16, per_page: u16) -> Result<Vec<Account>> {
         let accounts = self
             .repository
             .find_all_for_user(user, page.into(), per_page.into())?;
@@ -44,7 +39,7 @@ impl AccountMiddleware {
         Ok(accounts)
     }
 
-    pub fn find_account_for_user(&self, id: &str, user: &User) -> Result<Option<Account>> {
+    pub fn find_one_for_user(&self, id: &str, user: &User) -> Result<Option<Account>> {
         let real_id = id.parse::<i32>()?;
 
         let account = self.repository.find_for_user(real_id, user)?;

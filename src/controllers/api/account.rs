@@ -24,7 +24,7 @@ pub fn account_list(
         return Err(ApiResponse::from_status(Status::Unauthorized));
     }
 
-    let list = account_middleware.list_account_for_user(user, pagination.page, pagination.per_page);
+    let list = account_middleware.find_for_user(user, pagination.page, pagination.per_page);
 
     if list.is_err() {
         return Err(ApiResponse::from_status(Status::InternalServerError));
@@ -50,7 +50,7 @@ pub fn account_details(
         return Err(ApiResponse::from_status(Status::Unauthorized));
     }
 
-    let account = account_middleware.find_account_for_user(&id, user);
+    let account = account_middleware.find_one_for_user(&id, user);
 
     if account.is_err() {
         return Err(ApiResponse::from_status(Status::InternalServerError));
