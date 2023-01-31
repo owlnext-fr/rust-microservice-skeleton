@@ -1,5 +1,5 @@
 use rocket::{
-    http::{Header, Status},
+    http::Status,
     request::{FromRequest, Outcome},
     Request,
 };

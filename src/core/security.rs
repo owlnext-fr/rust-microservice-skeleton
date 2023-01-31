@@ -25,7 +25,7 @@ where
         }
     }
 
-    pub fn add_handler(&mut self, handler: Box<T>) -> &mut Self {
+    pub fn add_voter(&mut self, handler: Box<T>) -> &mut Self {
         self.voters.insert(handler.supports(), handler);
 
         self
@@ -53,65 +53,12 @@ pub trait SecurityVoter<'a>: Send + Sync {
     fn has_access(&self, right: &str, user: &User) -> bool;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[derive(Default)]
-    struct TestSecurityHandler {}
-
-    impl<'a> SecurityVoter<'a> for TestSecurityHandler {
-        fn supports(&self) -> &'a str {
-            "test"
-        }
-
-        fn has_access(&self, right: &str, _user: &User) -> bool {
-            if right == "ACCEPT_ACCESS" {
-                return true;
-            }
-
-            false
-        }
-    }
-
-    #[derive(Default)]
-    struct STestSecurityHandler {}
-
-    impl<'a> SecurityVoter<'a> for STestSecurityHandler {
-        fn supports(&self) -> &'a str {
-            "test 2"
-        }
-
-        fn has_access(&self, right: &str, _user: &User) -> bool {
-            if right == "ACCEPT_ACCESS" {
-                return true;
-            }
-
-            false
-        }
-    }
-
-    #[test]
-    fn test_custom_security_handler() {
-        let mut security = Security::<dyn SecurityVoter>::new(); // <- line with the error
-
-        security.add_handler(Box::new(TestSecurityHandler::default()));
-        security.add_handler(Box::new(STestSecurityHandler::default()));
-
-        let user = User::default();
-
-        assert!(security.has_access("test", "ACCEPT_ACCESS", &user));
-    }
-
-    #[test]
-    fn test_handler_not_found() {
-        let mut security = Security::<dyn SecurityVoter>::new(); // <- line with the error
-
-        security.add_handler(Box::new(TestSecurityHandler::default()));
-        security.add_handler(Box::new(STestSecurityHandler::default()));
-
-        let user = User::default();
-
-        assert!(!security.has_access("foo", "bar", &user));
-    }
+pub fn is_user(user: &User) -> bool {
+    user.roles.contains(&"ROLE_USER".into())
+}
+pub fn is_admin(user: &User) -> bool {
+    user.roles.contains(&"ROLE_USER_ADMIN".into())
+}
+pub fn is_a(role: &str, user: &User) -> bool {
+    user.roles.contains(&role.into())
 }

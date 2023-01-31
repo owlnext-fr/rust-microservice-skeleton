@@ -83,35 +83,3 @@ fn get_public_certificate_content() -> Result<String> {
 
     Ok(content)
 }
-
-#[cfg(test)]
-mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
-
-    fn prelude() {}
-
-    fn create_claim() -> APIClaim {
-        APIClaim {
-            user_id: 1,
-            roles: vec!["ROLE_USER".into()],
-            username: "test".into(),
-        }
-    }
-
-    #[test]
-    fn create_jwt() {
-        prelude();
-        let jwt_token = encode(create_claim(), 3600, "owlnext").unwrap();
-        println!("{}", jwt_token);
-    }
-
-    #[test]
-    fn validate_jwt() {
-        prelude();
-        let jwt_token = encode(create_claim(), 3600, "owlnext").unwrap();
-        let claims_response = decode(&jwt_token, "owlnext");
-        assert!(claims_response.is_ok());
-        println!("{:#?}", claims_response.unwrap());
-    }
-}

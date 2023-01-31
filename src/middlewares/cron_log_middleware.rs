@@ -6,12 +6,12 @@ use crate::domain::{
     repository::cron_log_repository::CronLogRepository,
 };
 
-#[derive(Default, Clone, Copy)]
-pub struct CronLogMiddleware<CronLogRepository> {
+#[derive(Clone)]
+pub struct CronLogMiddleware {
     repository: CronLogRepository,
 }
 
-impl CronLogMiddleware<CronLogRepository> {
+impl CronLogMiddleware {
     pub fn new(repository: CronLogRepository) -> Self {
         Self { repository }
     }

@@ -8,8 +8,6 @@ use super::{
     },
     security::{Security, SecurityVoter},
 };
-use crate::controllers::app;
-use crate::core::catcher;
 use crate::{
     commands::test_command::TestCommand,
     controllers::api::{account, auth, security_test},
@@ -23,8 +21,9 @@ use crate::{
         cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
         user_middleware::UserMiddleware,
     },
-    security::handlers::test_security_handler::TestSecurityHandler,
 };
+use crate::{controllers::app, security::handlers::account_security::AccountSecurityVoter};
+use crate::{core::catcher, security::handlers::test_security::TestSecurityVoter};
 use rocket::{Build, Rocket};
 use std::sync::Arc;
 
@@ -76,6 +75,7 @@ pub fn build() -> Rocket<Build> {
     // -- security --
     //
     let mut security = Security::<dyn SecurityVoter>::new();
+    security.add_voter(Box::<AccountSecurityVoter>::default());
 
     //
     // -- fixtures --
@@ -100,7 +100,7 @@ pub fn build() -> Rocket<Build> {
             );
 
         // security testing voter
-        security.add_handler(Box::<TestSecurityHandler>::default());
+        security.add_voter(Box::<TestSecurityVoter>::default());
     }
 
     build = build

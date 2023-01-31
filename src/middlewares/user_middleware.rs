@@ -31,13 +31,13 @@ pub enum JWTAuthenticationError {
     UserNotFound(i32),
 }
 
-#[derive(Default, Clone)]
-pub struct UserMiddleware<UserRepository> {
+#[derive(Clone)]
+pub struct UserMiddleware {
     repository: UserRepository,
     configuration: ConfigState,
 }
 
-impl UserMiddleware<UserRepository> {
+impl UserMiddleware {
     pub fn new(repository: UserRepository, configuration: ConfigState) -> Self {
         Self {
             repository,

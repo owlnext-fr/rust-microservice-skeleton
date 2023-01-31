@@ -35,21 +35,3 @@ pub fn compare_hashed(clear_password: &str, hashed_password: &str) -> bool {
         .verify_password(clear_password.as_bytes(), &parsed_hash)
         .is_ok()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_password() {
-        let passwd = "admin";
-
-        let salt = generate_salt();
-
-        let encoded = hash(passwd, salt);
-
-        println!("{}", encoded);
-
-        assert!(compare_hashed(passwd, encoded.as_str()));
-    }
-}

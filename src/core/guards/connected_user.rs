@@ -5,7 +5,7 @@ use rocket::{
 };
 
 use crate::{
-    domain::{model::user::User, repository::user_repository::UserRepository},
+    domain::model::user::User,
     middlewares::user_middleware::{JWTAuthenticationError, UserMiddleware},
 };
 
@@ -29,10 +29,7 @@ impl<'r> FromRequest<'r> for ConnectedUser {
     type Error = AuthenticationError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let user_middleware = req
-            .rocket()
-            .state::<UserMiddleware<UserRepository>>()
-            .unwrap();
+        let user_middleware = req.rocket().state::<UserMiddleware>().unwrap();
 
         let jwt_header = req.headers().get("Authorization").next();
 

@@ -3,12 +3,7 @@ use rocket::{http::Status, serde::json::Json, State};
 
 use crate::{
     core::response::ApiResponse,
-    domain::{
-        dto::auth::{JWTTokenOutputDTO, LoginInputDTO, RefreshTokenInputDTO},
-        repository::{
-            refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
-        },
-    },
+    domain::dto::auth::{JWTTokenOutputDTO, LoginInputDTO, RefreshTokenInputDTO},
     exceptions::dto::http_exception::HttpException,
     middlewares::{
         refresh_token_middleware::RefreshTokenMiddleware, user_middleware::UserMiddleware,
@@ -20,8 +15,8 @@ use crate::middlewares::refresh_token_middleware::JWTRefreshTokenValidationError
 #[post("/token", format = "json", data = "<input>")]
 pub fn token(
     input: Validated<Json<LoginInputDTO>>,
-    user_middleware: &State<UserMiddleware<UserRepository>>,
-    refresh_token_middleware: &State<RefreshTokenMiddleware<RefreshTokenRepository>>,
+    user_middleware: &State<UserMiddleware>,
+    refresh_token_middleware: &State<RefreshTokenMiddleware>,
 ) -> Result<ApiResponse<JWTTokenOutputDTO>, ApiResponse<HttpException>> {
     let real_input = input.into_inner().into_inner();
 
@@ -54,8 +49,8 @@ pub fn token(
 #[post("/refresh-token", format = "json", data = "<input>")]
 pub fn refresh_token(
     input: Validated<Json<RefreshTokenInputDTO>>,
-    user_middleware: &State<UserMiddleware<UserRepository>>,
-    refresh_token_middleware: &State<RefreshTokenMiddleware<RefreshTokenRepository>>,
+    user_middleware: &State<UserMiddleware>,
+    refresh_token_middleware: &State<RefreshTokenMiddleware>,
 ) -> Result<ApiResponse<JWTTokenOutputDTO>, ApiResponse<HttpException>> {
     let input = input.into_inner().into_inner();
 
@@ -69,7 +64,7 @@ pub fn refresh_token(
             JWTRefreshTokenValidationError::Expired(_) => {
                 return Err(ApiResponse::from_status_with_reason(
                     Status::BadRequest,
-                    "token expired".into(),
+                    "token expired",
                 ));
             }
         }

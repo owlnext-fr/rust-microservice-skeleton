@@ -5,8 +5,7 @@ use anyhow::Result;
 use super::lock::OneAccessLock;
 
 use crate::{
-    domain::{model::cron_log::CronLog, repository::cron_log_repository::CronLogRepository},
-    middlewares::cron_log_middleware::CronLogMiddleware,
+    domain::model::cron_log::CronLog, middlewares::cron_log_middleware::CronLogMiddleware,
 };
 
 use super::lock::FileLock;
@@ -22,7 +21,7 @@ pub enum CommandResult {
 #[async_trait]
 pub trait ConsoleCommand: Send + Sync {
     fn get_name(&self) -> String;
-    fn get_cron_middleware(&self) -> &CronLogMiddleware<CronLogRepository>;
+    fn get_cron_middleware(&self) -> &CronLogMiddleware;
     async fn do_run(&self, args: &HashMap<String, Option<String>>) -> Result<CommandResult>;
 
     async fn begin(&self, unicity_key: &str, args_as_str: &str) -> Result<CronLog> {

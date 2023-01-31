@@ -9,12 +9,12 @@ use crate::domain::{
 
 use anyhow::Result;
 
-#[derive(Default, Clone)]
-pub struct ApplicationMiddleware<ApplicationRepository> {
+#[derive(Clone)]
+pub struct ApplicationMiddleware {
     repository: ApplicationRepository,
 }
 
-impl ApplicationMiddleware<ApplicationRepository> {
+impl ApplicationMiddleware {
     pub fn new(repository: ApplicationRepository) -> Self {
         Self { repository }
     }

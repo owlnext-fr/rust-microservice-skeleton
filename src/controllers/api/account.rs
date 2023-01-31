@@ -4,11 +4,9 @@ use crate::{
     core::{
         guards::{connected_user::ConnectedUser, pagination::Pagination},
         response::ApiResponse,
+        security::{Security, SecurityVoter},
     },
-    domain::{
-        dto::account::{AccountDetailsDTO, AccountListItemDTO},
-        repository::account_repository::AccountRepository,
-    },
+    domain::dto::account::{AccountDetailsDTO, AccountListItemDTO},
     exceptions::dto::http_exception::HttpException,
     middlewares::account_middleware::AccountMiddleware,
 };
@@ -16,14 +14,17 @@ use crate::{
 #[get("/accounts", format = "json")]
 pub fn account_list(
     connected_user: ConnectedUser,
-    account_middleware: &State<AccountMiddleware<AccountRepository>>,
+    account_middleware: &State<AccountMiddleware>,
     pagination: Pagination,
+    security: &State<Security<dyn SecurityVoter>>,
 ) -> Result<ApiResponse<Vec<AccountListItemDTO>>, ApiResponse<HttpException>> {
-    let list = account_middleware.list_account_for_user(
-        &connected_user.user,
-        pagination.page,
-        pagination.per_page,
-    );
+    let user = &connected_user.user;
+
+    if !security.has_access("account", "list", user) {
+        return Err(ApiResponse::from_status(Status::Unauthorized));
+    }
+
+    let list = account_middleware.list_account_for_user(user, pagination.page, pagination.per_page);
 
     if list.is_err() {
         return Err(ApiResponse::from_status(Status::InternalServerError));
@@ -40,9 +41,16 @@ pub fn account_list(
 pub fn account_details(
     id: String,
     connected_user: ConnectedUser,
-    account_middleware: &State<AccountMiddleware<AccountRepository>>,
+    account_middleware: &State<AccountMiddleware>,
+    security: &State<Security<dyn SecurityVoter>>,
 ) -> Result<ApiResponse<AccountDetailsDTO>, ApiResponse<HttpException>> {
-    let account = account_middleware.find_account_for_user(&id, &connected_user.user);
+    let user = &connected_user.user;
+
+    if !security.has_access("account", "details", user) {
+        return Err(ApiResponse::from_status(Status::Unauthorized));
+    }
+
+    let account = account_middleware.find_account_for_user(&id, user);
 
     if account.is_err() {
         return Err(ApiResponse::from_status(Status::InternalServerError));

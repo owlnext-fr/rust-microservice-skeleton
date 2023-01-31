@@ -1,6 +1,5 @@
 use crate::{
     core::commands::console_command::{CommandResult, ConsoleCommand},
-    domain::repository::cron_log_repository::CronLogRepository,
     middlewares::cron_log_middleware::CronLogMiddleware,
 };
 
@@ -8,11 +7,11 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 pub struct TestCommand {
-    cron_log_middleware: CronLogMiddleware<CronLogRepository>,
+    cron_log_middleware: CronLogMiddleware,
 }
 
 impl TestCommand {
-    pub fn new(cron_log_middleware: CronLogMiddleware<CronLogRepository>) -> Self {
+    pub fn new(cron_log_middleware: CronLogMiddleware) -> Self {
         Self {
             cron_log_middleware,
         }
@@ -25,7 +24,7 @@ impl ConsoleCommand for TestCommand {
         "app:test".into()
     }
 
-    fn get_cron_middleware(&self) -> &CronLogMiddleware<CronLogRepository> {
+    fn get_cron_middleware(&self) -> &CronLogMiddleware {
         &self.cron_log_middleware
     }
 

@@ -1,9 +1,9 @@
 use crate::{core::security::SecurityVoter, domain::model::user::User};
 
 #[derive(Default)]
-pub struct TestSecurityHandler {}
+pub struct TestSecurityVoter {}
 
-impl<'a> SecurityVoter<'a> for TestSecurityHandler {
+impl<'a> SecurityVoter<'a> for TestSecurityVoter {
     fn supports(&self) -> &'a str {
         "security_test"
     }

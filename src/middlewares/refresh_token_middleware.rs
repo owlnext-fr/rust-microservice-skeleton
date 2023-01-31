@@ -20,13 +20,13 @@ pub enum JWTRefreshTokenValidationError {
     Expired(String),
 }
 
-#[derive(Default, Clone)]
-pub struct RefreshTokenMiddleware<RefreshTokenRepository> {
+#[derive(Clone)]
+pub struct RefreshTokenMiddleware {
     repository: RefreshTokenRepository,
     config: ConfigState,
 }
 
-impl RefreshTokenMiddleware<RefreshTokenRepository> {
+impl RefreshTokenMiddleware {
     pub fn new(repository: RefreshTokenRepository, config: ConfigState) -> Self {
         Self { repository, config }
     }
