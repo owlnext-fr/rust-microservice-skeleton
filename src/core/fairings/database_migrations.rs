@@ -4,7 +4,6 @@ use diesel::{Connection, PgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use rocket::{
     fairing::{Fairing, Info, Kind},
-    log::private::debug,
     Orbit, Rocket,
 };
 
@@ -29,7 +28,5 @@ impl Fairing for DatabaseMigrations {
         pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
         conn.run_pending_migrations(MIGRATIONS).unwrap();
-
-        debug!(" >> Migration done !");
     }
 }

@@ -8,9 +8,10 @@ use super::{
     },
     security::{Security, SecurityVoter},
 };
+use crate::core::catcher;
 use crate::{
     commands::test_command::TestCommand,
-    controllers::api::{account, application, auth, security_test},
+    controllers::api::{account, application, auth},
     domain::repository::{
         account_repository::AccountRepository, application_repository::ApplicationRepository,
         cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
@@ -24,7 +25,6 @@ use crate::{
     security::handlers::application_security::ApplicationSecurityVoter,
 };
 use crate::{controllers::app, security::handlers::account_security::AccountSecurityVoter};
-use crate::{core::catcher, security::handlers::test_security::TestSecurityVoter};
 use rocket::{Build, Rocket};
 use std::sync::Arc;
 
@@ -90,15 +90,7 @@ pub fn build() -> Rocket<Build> {
     // -- starting rocket setup --
     //
     if configuration.get_string_or_default("env", "dev") == "dev" {
-        build = build
-            // security testing routes
-            .mount(
-                "/api/security-test",
-                routes![security_test::test_connected, security_test::test_secured],
-            );
-
-        // security testing voter
-        security.add_voter(Box::<TestSecurityVoter>::default());
+        // add actions when on dev
     }
 
     build = build
