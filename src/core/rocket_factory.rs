@@ -66,10 +66,6 @@ pub fn build() -> Rocket<Build> {
     //
     #[allow(unused_mut)]
     let mut command_registry = ConsoleCommandRegistry::new();
-
-    //
-    // -- command registry insertions --
-    //
     command_registry.add(Arc::new(TestCommand::new(cron_log_middleware.clone())));
 
     //

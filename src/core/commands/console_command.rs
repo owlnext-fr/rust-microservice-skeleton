@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::{collections::HashMap, str::FromStr};
 
 use anyhow::Result;
 
@@ -88,20 +88,5 @@ pub trait ConsoleCommand: Send + Sync {
 
     fn generate_unicity_key(&self, args_as_str: &str) -> String {
         format!("{}_{}", self.get_name(), args_as_str)
-    }
-}
-
-pub struct CommandHandler<T: ConsoleCommand + ?Sized + Send + Sync> {
-    pub command: Arc<T>,
-}
-
-impl<T> Clone for CommandHandler<T>
-where
-    T: ConsoleCommand + ?Sized + Send + Sync,
-{
-    fn clone(&self) -> Self {
-        Self {
-            command: self.command.clone(),
-        }
     }
 }
