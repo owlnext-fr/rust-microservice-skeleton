@@ -1,7 +1,3 @@
-use std::sync::Arc;
-
-use rocket::{Build, Rocket};
-
 use super::{
     commands::console_command_registry::ConsoleCommandRegistry,
     configuration::ConfigState,
@@ -12,12 +8,11 @@ use super::{
     },
     security::{Security, SecurityVoter},
 };
+use crate::controllers::app;
+use crate::core::catcher;
 use crate::{
     commands::test_command::TestCommand,
-    controllers::{
-        api::{account, auth, security_test},
-        app, catchers,
-    },
+    controllers::api::{account, auth, security_test},
     domain::repository::{
         account_repository::AccountRepository, application_repository::ApplicationRepository,
         cron_log_repository::CronLogRepository, refresh_token_repository::RefreshTokenRepository,
@@ -30,6 +25,8 @@ use crate::{
     },
     security::handlers::test_security_handler::TestSecurityHandler,
 };
+use rocket::{Build, Rocket};
+use std::sync::Arc;
 
 #[allow(clippy::redundant_clone, unused_mut)]
 pub fn build() -> Rocket<Build> {
@@ -96,8 +93,6 @@ pub fn build() -> Rocket<Build> {
     //
     if configuration.get_string_or_default("env", "dev") == "dev" {
         build = build
-            // catcher for invalid JSON input
-            .register("/", catchers![rocket_validation::validation_catcher])
             // security testing routes
             .mount(
                 "/api/security-test",
@@ -117,7 +112,7 @@ pub fn build() -> Rocket<Build> {
             routes![account::account_list, account::account_details],
         )
         // catchers
-        .register("/", catchers![catchers::default_catcher])
+        .register("/", catchers![catcher::default_catcher])
         // managed global states
         .manage(configuration)
         .manage(db_state)

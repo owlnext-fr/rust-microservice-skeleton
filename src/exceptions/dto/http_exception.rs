@@ -6,7 +6,7 @@ use serde::Serialize;
 pub struct HttpException {
     pub code: u16,
     pub message: String,
-    pub reason: Option<String>,
+    pub errors: Option<String>,
 }
 
 impl HttpException {
@@ -16,7 +16,7 @@ impl HttpException {
         HttpException {
             code: status.code,
             message: status.reason().unwrap_or("Unknown error").to_string(),
-            reason: None,
+            errors: None,
         }
     }
 
@@ -24,20 +24,20 @@ impl HttpException {
         HttpException {
             code: status.code,
             message: status.reason().unwrap_or("Unknown error").to_string(),
-            reason: None,
+            errors: None,
         }
     }
 
     pub fn from_code_with_reason(code: u16, reason: Option<String>) -> Self {
         let mut ex: Self = Self::from_code(code);
-        ex.reason = reason;
+        ex.errors = reason;
 
         ex
     }
 
     pub fn from_status_with_reason(status: Status, reason: Option<String>) -> Self {
         let mut ex = Self::from_status(status);
-        ex.reason = reason;
+        ex.errors = reason;
 
         ex
     }

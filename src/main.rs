@@ -10,6 +10,7 @@ extern crate anyhow;
 extern crate clap;
 extern crate diesel_migrations;
 extern crate failure;
+pub extern crate validator;
 
 pub mod commands;
 pub mod controllers;

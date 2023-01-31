@@ -1,3 +1,4 @@
+pub mod catcher;
 pub mod commands;
 pub mod configuration;
 pub mod database;
@@ -11,3 +12,4 @@ pub mod password_generator;
 pub mod response;
 pub mod rocket_factory;
 pub mod security;
+pub mod validation;

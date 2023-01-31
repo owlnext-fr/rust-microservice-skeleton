@@ -1,5 +1,5 @@
-use rocket_validation::Validate;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 #[derive(Serialize, Default)]
 #[serde(crate = "rocket::serde")]
