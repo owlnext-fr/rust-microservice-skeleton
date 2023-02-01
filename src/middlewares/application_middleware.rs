@@ -25,6 +25,14 @@ impl ApplicationMiddleware {
         Ok(application)
     }
 
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<Application>> {
+        let real_id = id.parse::<i32>()?;
+
+        let account = self.repository.find_one_by_id(real_id)?;
+
+        Ok(account)
+    }
+
     pub fn find_for_user(&self, user: &User, page: u16, per_page: u16) -> Result<Vec<Application>> {
         let applications = self
             .repository

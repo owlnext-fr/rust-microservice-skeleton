@@ -1,4 +1,4 @@
-use crate::core::validation::Validated;
+use crate::{core::validation::Validated, http_exception};
 use rocket::{http::Status, serde::json::Json, State};
 
 use crate::{
@@ -23,7 +23,7 @@ pub fn token(
     let auth_result = user_middleware.authenticate_user_from_input(&real_input);
 
     if auth_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::NotFound);
     }
 
     let current_user = auth_result.unwrap();
@@ -31,13 +31,16 @@ pub fn token(
     let jwt_token_result = user_middleware.create_jwt_for_user(&current_user);
 
     if jwt_token_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::InternalServerError, "Could not create JWT token");
     }
 
     let refresh_token_result = refresh_token_middleware.generate_for_user(&current_user);
 
     if refresh_token_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(
+            Status::InternalServerError,
+            "Could not create refresh token"
+        );
     }
 
     Ok(ApiResponse::ok(Json(JWTTokenOutputDTO {
@@ -59,37 +62,43 @@ pub fn refresh_token(
     if let Err(token_error) = token_valid {
         match token_error {
             JWTRefreshTokenValidationError::NotFound(_) => {
-                return Err(ApiResponse::from_status(Status::NotFound));
+                http_exception!(Status::NotFound);
             }
             JWTRefreshTokenValidationError::Expired(_) => {
-                return Err(ApiResponse::from_status_with_reason(
-                    Status::BadRequest,
-                    "token expired",
-                ));
+                http_exception!(Status::BadRequest, "Token expired");
             }
         }
     }
 
     let token = token_valid.unwrap();
 
-    let user_query_result = user_middleware.find_by_id(token.user_id);
+    let user_query_result = user_middleware.find_one_by_id(&format!("{}", token.user_id));
 
     if user_query_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::InternalServerError);
     }
 
     let current_user = user_query_result.unwrap();
 
+    if current_user.is_none() {
+        http_exception!(Status::NotFound);
+    }
+
+    let current_user = current_user.unwrap();
+
     let jwt_token_result = user_middleware.create_jwt_for_user(&current_user);
 
     if jwt_token_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::InternalServerError, "Could not create JWT token");
     }
 
     let refresh_token_result = refresh_token_middleware.generate_for_user(&current_user);
 
     if refresh_token_result.is_err() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(
+            Status::InternalServerError,
+            "Could not create refresh token"
+        );
     }
 
     Ok(ApiResponse::ok(Json(JWTTokenOutputDTO {

@@ -6,8 +6,10 @@ use crate::{
         response::ApiResponse,
         security::{Security, SecurityVoter},
     },
+    deny_access_unless_granted,
     domain::dto::account::{AccountDetailsDTO, AccountListItemDTO},
     exceptions::dto::http_exception::HttpException,
+    http_exception,
     middlewares::account_middleware::AccountMiddleware,
 };
 
@@ -20,14 +22,12 @@ pub fn account_list(
 ) -> Result<ApiResponse<Vec<AccountListItemDTO>>, ApiResponse<HttpException>> {
     let user = &connected_user.user;
 
-    if !security.has_access("account", "list", user) {
-        return Err(ApiResponse::from_status(Status::Unauthorized));
-    }
+    deny_access_unless_granted!(security, user, "account", "list");
 
     let list = account_middleware.find_for_user(user, pagination.page, pagination.per_page);
 
     if list.is_err() {
-        return Err(ApiResponse::from_status(Status::InternalServerError));
+        http_exception!(Status::InternalServerError);
     }
 
     let list = list.unwrap();
@@ -46,20 +46,18 @@ pub fn account_details(
 ) -> Result<ApiResponse<AccountDetailsDTO>, ApiResponse<HttpException>> {
     let user = &connected_user.user;
 
-    if !security.has_access("account", "details", user) {
-        return Err(ApiResponse::from_status(Status::Unauthorized));
-    }
+    deny_access_unless_granted!(security, user, "account", "details");
 
     let account = account_middleware.find_one_for_user(&id, user);
 
     if account.is_err() {
-        return Err(ApiResponse::from_status(Status::InternalServerError));
+        http_exception!(Status::InternalServerError);
     }
 
     let account = account.unwrap();
 
     if account.is_none() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::NotFound);
     }
 
     let account = account.unwrap();

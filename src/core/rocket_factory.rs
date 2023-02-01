@@ -8,7 +8,15 @@ use super::{
     },
     security::{Security, SecurityVoter},
 };
-use crate::core::catcher;
+use crate::{
+    commands::app::{
+        create_account_command::CreateAccountCommand,
+        create_application_command::CreateApplicationCommand,
+        create_user_command::CreateUserCommand, demote_user_command::DemoteUserCommand,
+        promote_user_command::PromoteUserCommand,
+    },
+    core::catcher,
+};
 use crate::{
     commands::test_command::TestCommand,
     controllers::api::{account, application, auth},
@@ -66,8 +74,32 @@ pub fn build() -> Rocket<Build> {
     //
     #[allow(unused_mut)]
     let mut command_registry = ConsoleCommandRegistry::new();
-    command_registry.add(Arc::new(TestCommand::new(cron_log_middleware.clone())));
-
+    command_registry.add(Arc::new(CreateAccountCommand::new(
+        cron_log_middleware.clone(),
+        account_middleware.clone(),
+        application_middleware.clone(),
+        user_middleware.clone(),
+    )));
+    command_registry.add(Arc::new(CreateApplicationCommand::new(
+        cron_log_middleware.clone(),
+        account_middleware.clone(),
+        application_middleware.clone(),
+        user_middleware.clone(),
+    )));
+    command_registry.add(Arc::new(CreateUserCommand::new(
+        cron_log_middleware.clone(),
+        account_middleware.clone(),
+        application_middleware.clone(),
+        user_middleware.clone(),
+    )));
+    command_registry.add(Arc::new(PromoteUserCommand::new(
+        cron_log_middleware.clone(),
+        user_middleware.clone(),
+    )));
+    command_registry.add(Arc::new(DemoteUserCommand::new(
+        cron_log_middleware.clone(),
+        user_middleware.clone(),
+    )));
     //
     // -- security --
     //
@@ -89,8 +121,10 @@ pub fn build() -> Rocket<Build> {
     //
     // -- starting rocket setup --
     //
-    if configuration.get_string_or_default("env", "dev") == "dev" {
+    if cfg!(debug_assertions) {
         // add actions when on dev
+
+        command_registry.add(Arc::new(TestCommand::new(cron_log_middleware.clone())));
     }
 
     build = build

@@ -1,11 +1,13 @@
 use std::{collections::HashMap, str::FromStr};
 
 use anyhow::Result;
+use stopwatch::Stopwatch;
 
 use super::lock::OneAccessLock;
 
 use crate::{
-    domain::model::cron_log::CronLog, middlewares::cron_log_middleware::CronLogMiddleware,
+    core::commands::console_command_utils::ConsoleIO, domain::model::cron_log::CronLog,
+    middlewares::cron_log_middleware::CronLogMiddleware,
 };
 
 use super::lock::FileLock;
@@ -64,6 +66,9 @@ pub trait ConsoleCommand: Send + Sync {
     }
 
     async fn run(&self, args: &CommandArgs) -> Result<()> {
+        let sw = Stopwatch::start_new();
+        let io = ConsoleIO::new();
+
         let args_as_str = self.get_args_as_str(args);
         let key = self.generate_unicity_key(&args_as_str);
 
@@ -72,12 +77,20 @@ pub trait ConsoleCommand: Send + Sync {
         let result = self.do_run(args).await;
 
         if let Err(error) = &result {
-            self.end(&key, &cron_log, CommandResult::ERROR(error.to_string()))
+            let error_text = error.to_string();
+            io.error(&error_text);
+
+            self.end(&key, &cron_log, CommandResult::ERROR(error_text))
                 .await?;
+
+            return Ok(());
         }
 
         let command_result = result.unwrap();
         self.end(&key, &cron_log, command_result).await?;
+
+        println!();
+        println!("-- Elapsed: {:.3}sec --", sw.elapsed().as_secs_f32());
 
         Ok(())
     }

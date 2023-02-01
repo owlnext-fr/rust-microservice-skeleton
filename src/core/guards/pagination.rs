@@ -19,6 +19,7 @@ pub struct Pagination {
 pub enum PaginationError {
     PageParseError,
     PerPageParseError,
+    ZeroPage,
     ZeroPerPage,
 }
 
@@ -36,7 +37,7 @@ impl<'r> FromRequest<'r> for Pagination {
         if let Some(parsed_page) = query_page {
             if parsed_page.is_err() {
                 req.local_cache(|| ErrorMessage {
-                    message: "error on page".into(),
+                    message: "page parameter cannot be parsed".into(),
                 });
                 return Outcome::Failure((Status::BadRequest, PaginationError::PageParseError));
             }
@@ -46,13 +47,26 @@ impl<'r> FromRequest<'r> for Pagination {
 
         if let Some(parsed_per_page) = query_per_page {
             if parsed_per_page.is_err() {
+                req.local_cache(|| ErrorMessage {
+                    message: "per_page parameter cannot be parsed".into(),
+                });
                 return Outcome::Failure((Status::BadRequest, PaginationError::PerPageParseError));
             }
 
             per_page = parsed_per_page.unwrap();
         }
 
+        if page == 0 {
+            req.local_cache(|| ErrorMessage {
+                message: "page must be a positive integer".into(),
+            });
+            return Outcome::Failure((Status::BadRequest, PaginationError::ZeroPerPage));
+        }
+
         if per_page == 0 {
+            req.local_cache(|| ErrorMessage {
+                message: "per_page must be a positive integer".into(),
+            });
             return Outcome::Failure((Status::BadRequest, PaginationError::ZeroPerPage));
         }
 

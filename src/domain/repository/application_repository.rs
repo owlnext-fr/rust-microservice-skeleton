@@ -7,7 +7,10 @@ use crate::{
             application::{Application, NewApplication},
             user::User,
         },
-        schema::*,
+        schema::{
+            application::{id, is_deleted},
+            *,
+        },
     },
 };
 
@@ -33,6 +36,16 @@ impl ApplicationRepository {
             .get_result(&mut self.get_db())?;
 
         Ok(account)
+    }
+
+    pub fn find_one_by_id(&self, application_id: i32) -> Result<Option<Application>> {
+        let application = application::table
+            .filter(id.eq(application_id))
+            .filter(is_deleted.eq(false))
+            .get_result::<Application>(&mut self.get_db())
+            .optional()?;
+
+        Ok(application)
     }
 
     pub fn find_all_for_user(
@@ -63,7 +76,7 @@ impl ApplicationRepository {
         Ok(applications)
     }
 
-    pub fn find_for_user(&self, id: i32, user: &User) -> Result<Option<Application>> {
+    pub fn find_for_user(&self, application_id: i32, user: &User) -> Result<Option<Application>> {
         let application = sql_query(
             "
             SELECT *
@@ -74,7 +87,7 @@ impl ApplicationRepository {
         ",
         )
         .bind::<Integer, _>(user.id)
-        .bind::<Integer, _>(id)
+        .bind::<Integer, _>(application_id)
         .get_result(&mut self.get_db())
         .optional()?;
 

@@ -5,7 +5,7 @@ use rocket::{
     Build, Rocket,
 };
 
-use crate::{console_error, console_warning, core::jwt};
+use crate::core::{commands::console_command_utils::ConsoleIO, jwt};
 
 #[derive(Default)]
 pub struct JWTCertificatesFairing {}
@@ -20,14 +20,16 @@ impl Fairing for JWTCertificatesFairing {
     }
 
     async fn on_ignite(&self, rocket: Rocket<Build>) -> Result {
+        let io = ConsoleIO::new();
+
         let jwt_sec_dir = jwt::get_certificate_dir();
 
         if !jwt_sec_dir.exists() {
             let cr_result = fs::create_dir(jwt_sec_dir.clone());
 
             if cr_result.is_err() {
-                console_error!(
-                    "Cannot create secured JWT token certificates directory, aborting launch..."
+                io.error(
+                    "Cannot create secured JWT token certificates directory, aborting launch...",
                 );
                 return Err(rocket);
             }
@@ -43,13 +45,13 @@ impl Fairing for JWTCertificatesFairing {
         }
 
         if public_key_path.exists() && !private_key_path.exists() {
-            console_warning!("Something is wrong with certificates, they will be generated.");
+            io.warning("Something is wrong with certificates, they will be generated.");
             fs::remove_file(&public_key_path).unwrap();
             needs_generation = true;
         }
 
         if !public_key_path.exists() && private_key_path.exists() {
-            console_warning!("Something is wrong with certificates, they will be generated.");
+            io.warning("Something is wrong with certificates, they will be generated.");
             fs::remove_file(&private_key_path).unwrap();
             needs_generation = true;
         }
@@ -64,7 +66,7 @@ impl Fairing for JWTCertificatesFairing {
                 .output();
 
             if certs_creation.is_err() {
-                console_error!("Cannot create secured JWT token certificates, aborting launch...");
+                io.error("Cannot create secured JWT token certificates, aborting launch...");
                 return Err(rocket);
             }
         }

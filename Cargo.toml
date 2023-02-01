@@ -28,3 +28,9 @@ md5 = "0.7.0"
 tokio-test = "0.4.2"
 ulid = "1.0.0"
 clap = { version = "4.1.4", features = ["derive"] }
+inquire = { version = "0.5.3", features = ["date"] }
+console = "0.15.5"
+indicatif = "0.17.3"
+stopwatch = "0.0.7"
+comfy-table = "6.1.4"
+thiserror = "1.0.38"

@@ -1,33 +1,33 @@
+use anyhow::bail;
 use argon2::password_hash::SaltString;
-use failure::Fail;
+use thiserror::Error;
 
 use crate::{
     core::{
         configuration::ConfigState,
-        database::DBRequestResultError,
         jwt,
         password::{self, generate_salt, hash},
     },
     domain::{
         dto::auth::LoginInputDTO,
-        model::user::{NewUser, User},
+        model::user::{NewUser, User, ROLE_USER_ADMIN},
         repository::user_repository::UserRepository,
     },
 };
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum AuthenticationError {
-    #[fail(display = "User {} not found.", _0)]
+    #[error("User {} not found.", _0)]
     UserNotFound(String),
-    #[fail(display = "Wrong password for user {}", _0)]
+    #[error("Wrong password for user {}", _0)]
     WrongPassword(i32),
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum JWTAuthenticationError {
-    #[fail(display = "Invalid token")]
+    #[error("Invalid token")]
     InvalidToken,
-    #[fail(display = "User {} not found.", _0)]
+    #[error("User {} not found.", _0)]
     UserNotFound(i32),
 }
 
@@ -45,10 +45,7 @@ impl UserMiddleware {
         }
     }
 
-    pub fn authenticate_user_from_input(
-        &self,
-        input: &LoginInputDTO,
-    ) -> Result<User, AuthenticationError> {
+    pub fn authenticate_user_from_input(&self, input: &LoginInputDTO) -> anyhow::Result<User> {
         let user_found = self.repository.load_user_by_login(input.login.as_str());
 
         if let Ok(user) = user_found {
@@ -58,32 +55,27 @@ impl UserMiddleware {
                 return Ok(user);
             }
 
-            return Err(AuthenticationError::WrongPassword(user.id));
+            return Err(AuthenticationError::WrongPassword(user.id).into());
         }
 
-        Err(AuthenticationError::UserNotFound(input.login.clone()))
+        Err(AuthenticationError::UserNotFound(input.login.clone()).into())
     }
 
-    pub fn authenticate_user_from_jwt(
-        &self,
-        jwt_token: &str,
-    ) -> Result<User, JWTAuthenticationError> {
+    pub fn authenticate_user_from_jwt(&self, jwt_token: &str) -> anyhow::Result<User> {
         let issuer = self.configuration.get_string("package.name").unwrap();
 
         let jwt_validation_result = jwt::decode(jwt_token, issuer.as_str());
 
         if jwt_validation_result.is_err() {
-            return Err(JWTAuthenticationError::InvalidToken);
+            return Err(JWTAuthenticationError::InvalidToken.into());
         }
 
         let jwt_claims = jwt_validation_result.unwrap();
 
-        let user_fetch_result = self.repository.find_by_id(jwt_claims.custom.user_id);
+        let user_fetch_result = self.repository.find_by_id(jwt_claims.custom.user_id)?;
 
-        if user_fetch_result.is_err() {
-            return Err(JWTAuthenticationError::UserNotFound(
-                jwt_claims.custom.user_id,
-            ));
+        if user_fetch_result.is_none() {
+            return Err(JWTAuthenticationError::UserNotFound(jwt_claims.custom.user_id).into());
         }
 
         Ok(user_fetch_result.unwrap())
@@ -104,18 +96,46 @@ impl UserMiddleware {
         Ok(jwt_token)
     }
 
-    pub fn find_by_id(&self, user_id: i32) -> Result<User, DBRequestResultError> {
-        let user_found = self.repository.find_by_id(user_id);
+    pub fn find_one_by_id(&self, user_id: &str) -> anyhow::Result<Option<User>> {
+        let user_real_id = user_id.parse::<i32>()?;
 
-        if user_found.is_err() {
-            return Err(DBRequestResultError::NotFound);
-        }
+        let user_found = self.repository.find_by_id(user_real_id)?;
 
-        Ok(user_found.unwrap())
+        Ok(user_found)
     }
 
     pub fn find_by_login(&self, login: &str) -> anyhow::Result<User> {
         let user = self.repository.find_by_login(login)?;
+
+        Ok(user)
+    }
+
+    pub fn promote(&self, user: &User) -> anyhow::Result<User> {
+        if user.roles.contains(&ROLE_USER_ADMIN.into()) {
+            bail!("User already promoted !");
+        }
+
+        let mut user = user.clone();
+        user.roles.push(ROLE_USER_ADMIN.into());
+
+        let user = self.update(&user)?;
+
+        Ok(user)
+    }
+
+    pub fn demote(&self, user: &User) -> anyhow::Result<User> {
+        if !user.roles.contains(&ROLE_USER_ADMIN.into()) {
+            bail!("User not promoted !");
+        }
+
+        let mut user = user.clone();
+
+        let mut roles = user.roles.clone();
+        roles.retain(|elem| elem != ROLE_USER_ADMIN);
+
+        user.roles = roles;
+
+        let user = self.update(&user)?;
 
         Ok(user)
     }
@@ -142,5 +162,9 @@ impl UserMiddleware {
         let user = self.repository.insert(new_user)?;
 
         Ok(user)
+    }
+
+    pub fn update(&self, user: &User) -> anyhow::Result<User> {
+        self.repository.update(user)
     }
 }

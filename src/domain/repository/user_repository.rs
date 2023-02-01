@@ -36,10 +36,11 @@ impl UserRepository {
         Ok(user)
     }
 
-    pub fn find_by_id(&self, user_id: i32) -> Result<User> {
+    pub fn find_by_id(&self, user_id: i32) -> Result<Option<User>> {
         let user = users::table
             .filter(id.eq(user_id))
-            .get_result::<User>(&mut self.get_db())?;
+            .get_result::<User>(&mut self.get_db())
+            .optional()?;
 
         Ok(user)
     }
@@ -58,5 +59,13 @@ impl UserRepository {
             .get_result(&mut self.get_db())?;
 
         Ok(user)
+    }
+
+    pub fn update(&self, updated_user: &User) -> Result<User> {
+        let updated = diesel::update(updated_user)
+            .set(updated_user)
+            .get_result(&mut self.get_db())?;
+
+        Ok(updated)
     }
 }

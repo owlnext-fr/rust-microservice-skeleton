@@ -6,8 +6,10 @@ use crate::{
         response::ApiResponse,
         security::{Security, SecurityVoter},
     },
+    deny_access_unless_granted,
     domain::dto::application::{ApplicationDetailsDTO, ApplicationListItemDTO},
     exceptions::dto::http_exception::HttpException,
+    http_exception,
     middlewares::application_middleware::ApplicationMiddleware,
 };
 
@@ -20,15 +22,12 @@ pub fn application_list(
 ) -> Result<ApiResponse<Vec<ApplicationListItemDTO>>, ApiResponse<HttpException>> {
     let user = &connected_user.user;
 
-    if !security.has_access("application", "list", user) {
-        return Err(ApiResponse::from_status(Status::Unauthorized));
-    }
+    deny_access_unless_granted!(security, user, "application", "list");
 
     let list = application_middleware.find_for_user(user, pagination.page, pagination.per_page);
 
     if list.is_err() {
-        debug!("{list:#?}");
-        return Err(ApiResponse::from_status(Status::InternalServerError));
+        http_exception!(Status::InternalServerError);
     }
 
     let list = list.unwrap();
@@ -47,20 +46,18 @@ pub fn application_details(
 ) -> Result<ApiResponse<ApplicationDetailsDTO>, ApiResponse<HttpException>> {
     let user = &connected_user.user;
 
-    if !security.has_access("application", "details", user) {
-        return Err(ApiResponse::from_status(Status::Unauthorized));
-    }
+    deny_access_unless_granted!(security, user, "application", "details");
 
     let application = application_middleware.find_one_for_user(&id, user);
 
     if application.is_err() {
-        return Err(ApiResponse::from_status(Status::InternalServerError));
+        http_exception!(Status::InternalServerError);
     }
 
     let application = application.unwrap();
 
     if application.is_none() {
-        return Err(ApiResponse::from_status(Status::NotFound));
+        http_exception!(Status::NotFound);
     }
 
     let account = application.unwrap();

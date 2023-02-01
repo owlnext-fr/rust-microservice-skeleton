@@ -7,7 +7,7 @@ use crate::{
             account::{Account, NewAccount},
             user::User,
         },
-        schema::account::{self, name},
+        schema::account::{self, id, is_deleted, name},
     },
 };
 
@@ -35,10 +35,22 @@ impl AccountRepository {
         Ok(account)
     }
 
-    pub fn find_one_by_name(&self, account_name: &str) -> Result<Account> {
+    pub fn find_one_by_id(&self, account_id: i32) -> Result<Option<Account>> {
+        let account = account::table
+            .filter(id.eq(account_id))
+            .filter(is_deleted.eq(false))
+            .get_result::<Account>(&mut self.get_db())
+            .optional()?;
+
+        Ok(account)
+    }
+
+    pub fn find_one_by_name(&self, account_name: &str) -> Result<Option<Account>> {
         let account = account::table
             .filter(name.eq(account_name))
-            .get_result::<Account>(&mut self.get_db())?;
+            .filter(is_deleted.eq(false))
+            .get_result::<Account>(&mut self.get_db())
+            .optional()?;
 
         Ok(account)
     }
@@ -64,7 +76,7 @@ impl AccountRepository {
         Ok(accounts)
     }
 
-    pub fn find_for_user(&self, id: i32, user: &User) -> Result<Option<Account>> {
+    pub fn find_for_user(&self, account_id: i32, user: &User) -> Result<Option<Account>> {
         let account = sql_query(
             "
             SELECT *
@@ -75,7 +87,7 @@ impl AccountRepository {
         ",
         )
         .bind::<Integer, _>(user.id)
-        .bind::<Integer, _>(id)
+        .bind::<Integer, _>(account_id)
         .get_result(&mut self.get_db()).optional()?;
 
         Ok(account)

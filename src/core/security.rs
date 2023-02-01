@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::domain::model::user::User;
+use crate::domain::model::user::{User, ROLE_USER, ROLE_USER_ADMIN};
 
 pub struct Security<'a, T: ?Sized + Send + Sync> {
     voters: HashMap<&'a str, Box<T>>,
@@ -54,10 +54,10 @@ pub trait SecurityVoter<'a>: Send + Sync {
 }
 
 pub fn is_user(user: &User) -> bool {
-    user.roles.contains(&"ROLE_USER".into())
+    user.roles.contains(&ROLE_USER.into())
 }
 pub fn is_admin(user: &User) -> bool {
-    user.roles.contains(&"ROLE_USER_ADMIN".into())
+    user.roles.contains(&ROLE_USER_ADMIN.into())
 }
 pub fn is_a(role: &str, user: &User) -> bool {
     user.roles.contains(&role.into())

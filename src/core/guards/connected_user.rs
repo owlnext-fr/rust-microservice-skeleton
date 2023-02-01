@@ -3,8 +3,10 @@ use rocket::{
     request::{FromRequest, Outcome},
     Request,
 };
+use thiserror::Error;
 
 use crate::{
+    core::response::ErrorMessage,
     domain::model::user::User,
     middlewares::user_middleware::{JWTAuthenticationError, UserMiddleware},
 };
@@ -14,14 +16,18 @@ pub struct ConnectedUser {
     pub user: User,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum AuthenticationError {
+    #[error("JWT header not found")]
     HeaderNotFound,
+    #[error("Invalid JWT header")]
     InvalidHeader,
+    #[error("Invalid JWT header")]
     MalformedHeader,
+    #[error("Invalid JWT token, perhaps malformatted or outdated")]
     InvalidJWT,
+    #[error("JWT token user not found")]
     UserNotFound,
-    NotEnoughPrivileges(String),
 }
 
 #[rocket::async_trait]
@@ -34,18 +40,27 @@ impl<'r> FromRequest<'r> for ConnectedUser {
         let jwt_header = req.headers().get("Authorization").next();
 
         if jwt_header.is_none() {
+            req.local_cache(|| ErrorMessage {
+                message: "JWT header not found".into(),
+            });
             return Outcome::Failure((Status::Unauthorized, AuthenticationError::HeaderNotFound));
         }
 
         let jwt_token_unparsed = jwt_header.unwrap();
 
         if !jwt_token_unparsed.to_lowercase().contains("bearer ") {
+            req.local_cache(|| ErrorMessage {
+                message: "Invalid JWT header".into(),
+            });
             return Outcome::Failure((Status::BadRequest, AuthenticationError::InvalidHeader));
         }
 
         let jwt_token_parsed = jwt_token_unparsed.split(' ').collect::<Vec<&str>>();
 
         if jwt_token_parsed.len() != 2 {
+            req.local_cache(|| ErrorMessage {
+                message: "Malformed JWT header".into(),
+            });
             return Outcome::Failure((Status::BadRequest, AuthenticationError::MalformedHeader));
         }
 
@@ -58,14 +73,20 @@ impl<'r> FromRequest<'r> for ConnectedUser {
             Ok(user) => {
                 return Outcome::Success(ConnectedUser { user: user.clone() });
             }
-            Err(error) => match error {
+            Err(error) => match error.downcast_ref::<JWTAuthenticationError>().unwrap() {
                 JWTAuthenticationError::InvalidToken => {
+                    req.local_cache(|| ErrorMessage {
+                        message: "Invalid JWT token, perhaps malformatted or outdated".into(),
+                    });
                     return Outcome::Failure((
                         Status::Unauthorized,
                         AuthenticationError::InvalidJWT,
                     ));
                 }
                 JWTAuthenticationError::UserNotFound(_) => {
+                    req.local_cache(|| ErrorMessage {
+                        message: "Invalid JWT token".into(),
+                    });
                     return Outcome::Failure((Status::NotFound, AuthenticationError::UserNotFound));
                 }
             },

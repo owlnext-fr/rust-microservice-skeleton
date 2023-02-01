@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 
 use super::application::Application;
 
+pub const ROLE_USER: &str = "ROLE_USER";
+pub const ROLE_USER_ADMIN: &str = "ROLE_USER_ADMIN";
+
 #[derive(
     Debug,
     Queryable,

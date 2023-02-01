@@ -25,8 +25,16 @@ impl AccountMiddleware {
         Ok(account)
     }
 
-    pub fn find_one_by_name(&self, name: &str) -> Result<Account> {
+    pub fn find_one_by_name(&self, name: &str) -> Result<Option<Account>> {
         let account = self.repository.find_one_by_name(name)?;
+
+        Ok(account)
+    }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<Account>> {
+        let real_id = id.parse::<i32>()?;
+
+        let account = self.repository.find_one_by_id(real_id)?;
 
         Ok(account)
     }
