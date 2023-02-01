@@ -1,2 +1,2 @@
 pub mod app;
-pub mod test_command;
+pub mod test;

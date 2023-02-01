@@ -18,7 +18,7 @@ use crate::{
     core::catcher,
 };
 use crate::{
-    commands::test_command::TestCommand,
+    commands::test::test_command::TestCommand,
     controllers::api::{account, application, auth},
     domain::repository::{
         account_repository::AccountRepository, application_repository::ApplicationRepository,
