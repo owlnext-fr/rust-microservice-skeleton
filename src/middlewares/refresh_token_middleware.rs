@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use failure::Fail;
+use thiserror::Error;
 
 use crate::{
     core::{configuration::ConfigState, password},
@@ -12,11 +12,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum JWTRefreshTokenValidationError {
-    #[fail(display = "Token not found : {} ", _0)]
+    #[error("Token not found : {} ", _0)]
     NotFound(String),
-    #[fail(display = "Token expired since : {} ", _0)]
+    #[error("Token expired since : {} ", _0)]
     Expired(String),
 }
 

@@ -1,7 +1,6 @@
 use anyhow::Result;
 
 use diesel::{r2d2::ConnectionManager, PgConnection};
-use failure::Fail;
 use r2d2::Pool;
 
 pub type DB = r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>;
@@ -18,10 +17,4 @@ pub fn get_connection_pool(conn_url: String) -> Result<PostgresPool> {
 #[derive(Clone)]
 pub struct DbPoolState {
     pub db_pool: PostgresPool,
-}
-
-#[derive(Debug, Fail)]
-pub enum DBRequestResultError {
-    #[fail(display = "Item(s) not found in database.")]
-    NotFound,
 }
