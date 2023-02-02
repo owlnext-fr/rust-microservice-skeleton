@@ -3,6 +3,7 @@ use rocket::request::Request;
 use rocket::response;
 use rocket::response::{Responder, Response};
 use rocket::serde::json::Json;
+use serde::Serialize;
 
 use crate::exceptions::dto::http_exception::HttpException;
 
@@ -47,6 +48,8 @@ impl ApiResponse<HttpException> {
     }
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct NoContentResponse;
 
 impl ApiResponse<NoContentResponse> {
@@ -62,7 +65,16 @@ impl ApiResponse<NoContentResponse> {
 impl<'r, T: serde::Serialize> Responder<'r, 'r> for ApiResponse<T> {
     fn respond_to(self, req: &Request) -> response::Result<'r> {
         if self.status == Status::NoContent {
+            // builds a response with no content
             return Response::build()
+                .status(self.status)
+                .header(ContentType::JSON)
+                .ok();
+        } else if self.status == Status::InternalServerError && !cfg!(debug_assertions) {
+            // intercepts 500 errors to avoid runtime error diffusion.
+            let json = Json(HttpException::from_status(self.status));
+
+            return Response::build_from(json.respond_to(req).unwrap())
                 .status(self.status)
                 .header(ContentType::JSON)
                 .ok();

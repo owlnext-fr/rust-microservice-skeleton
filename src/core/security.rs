@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use crate::domain::model::user::{User, ROLE_USER, ROLE_USER_ADMIN};
+use anyhow::{bail, Result};
+use std::collections::HashMap;
 
 pub struct Security<'a, T: ?Sized + Send + Sync> {
     voters: HashMap<&'a str, Box<T>>,
@@ -37,12 +37,18 @@ where
             .all(|item| user.roles.contains(&item.to_string()))
     }
 
-    pub fn has_access(&self, subject: &str, right: &str, user: &User) -> bool {
+    pub fn has_access(
+        &self,
+        subject: &str,
+        right: &str,
+        user: &User,
+        context: Option<HashMap<&str, String>>,
+    ) -> Result<bool> {
         if let Some(voter) = self.voters.get(subject) {
-            return voter.has_access(right, user);
+            return voter.has_access(right, user, context);
         }
 
-        false
+        bail!("Cannot find a security handler for {subject}: {right}");
     }
 }
 
@@ -50,7 +56,26 @@ pub trait SecurityVoter<'a>: Send + Sync {
     /// Gets the "subject" supported by the voter
     fn supports(&self) -> &'a str;
     /// Takes a given right and a user, and checks if the user has_access to the action represented by the right.
-    fn has_access(&self, right: &str, user: &User) -> bool;
+    fn has_access(
+        &self,
+        right: &str,
+        user: &User,
+        context: Option<HashMap<&str, String>>,
+    ) -> Result<bool>;
+
+    fn get_context(&self, context: Option<HashMap<&str, String>>, key: &str) -> Option<String> {
+        let mut result: Option<String> = None;
+
+        if context.is_some() {
+            if let Some(unwrapped_context) = context {
+                if unwrapped_context.contains_key(key) {
+                    result = Some(unwrapped_context.get(key).unwrap().clone());
+                }
+            }
+        }
+
+        result
+    }
 }
 
 pub fn is_user(user: &User) -> bool {

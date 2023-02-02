@@ -39,6 +39,7 @@ impl UserRepository {
     pub fn find_one_by_id(&self, user_id: i32) -> Result<Option<User>> {
         let user = users::table
             .filter(id.eq(user_id))
+            .filter(is_deleted.eq(false))
             .get_result::<User>(&mut self.get_db())
             .optional()?;
 

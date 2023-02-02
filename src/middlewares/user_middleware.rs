@@ -13,7 +13,7 @@ use crate::{
     domain::{
         dto::{
             auth::LoginInputDTO,
-            user::{NewUserInputDTO, UserDetailsDTO, UserListItemDTO},
+            user::{NewUserInputDTO, UpdateUserInputDTO, UserDetailsDTO, UserListItemDTO},
         },
         model::user::{NewUser, User, ROLE_USER, ROLE_USER_ADMIN},
         repository::user_repository::UserRepository,
@@ -208,6 +208,25 @@ impl UserMiddleware {
         self.create(new_user)
     }
 
+    pub fn update_from_user_input(
+        &self,
+        updater: &User,
+        to_update: &User,
+        dto: UpdateUserInputDTO,
+    ) -> anyhow::Result<User> {
+        if updater.application_id != to_update.application_id {
+            bail!("Update of a user outside of same application is forbidden.");
+        }
+
+        let mut user = to_update.clone();
+
+        user.email = Some(dto.email);
+        user.first_name = Some(dto.first_name);
+        user.last_name = Some(dto.last_name);
+
+        self.update(&user)
+    }
+
     pub fn create(&self, new_user: NewUser) -> anyhow::Result<User> {
         let mut new_user = new_user.clone();
 
@@ -238,6 +257,22 @@ impl UserMiddleware {
 
     pub fn update(&self, user: &User) -> anyhow::Result<User> {
         self.repository.update(user)
+    }
+
+    pub fn delete(&self, user_to_delete: &User, deleter: &User) -> anyhow::Result<bool> {
+        let mut cloned = user_to_delete.clone();
+
+        if cloned.id == deleter.id {
+            bail!("You cannot delete yourself.");
+        }
+
+        cloned.deleted_date = Some(Utc::now());
+        cloned.deleted_by = Some(deleter.id);
+        cloned.is_deleted = true;
+
+        self.update(&cloned)?;
+
+        Ok(true)
     }
 
     pub fn to_list_dto(&self, users: Vec<User>) -> Vec<UserListItemDTO> {

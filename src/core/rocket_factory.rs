@@ -142,7 +142,9 @@ pub fn build() -> Rocket<Build> {
                 application::application_details,
                 user::user_list,
                 user::user_details,
-                user::user_create
+                user::user_create,
+                user::user_update,
+                user::user_delete,
             ],
         )
         // catchers

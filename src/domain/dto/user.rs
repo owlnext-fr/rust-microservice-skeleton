@@ -69,6 +69,17 @@ pub struct NewUserInputDTO {
     pub password: String,
 }
 
+#[derive(Serialize, Deserialize, Validate)]
+#[serde(crate = "rocket::serde")]
+pub struct UpdateUserInputDTO {
+    #[validate(length(min = 1, max = 200))]
+    pub first_name: String,
+    #[validate(length(min = 1, max = 200))]
+    pub last_name: String,
+    #[validate(email, length(min = 1, max = 180))]
+    pub email: String,
+}
+
 fn validate_password(password: &str) -> Result<(), ValidationError> {
     if !password::is_strong(password.into()) {
         return Err(ValidationError::new("Password is not strong enough, it must contain at least 8 char, a capital letter, a number and a special symbol."));
