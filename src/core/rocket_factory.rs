@@ -9,15 +9,6 @@ use super::{
     security::{Security, SecurityVoter},
 };
 use crate::{
-    commands::app::{
-        create_account_command::CreateAccountCommand,
-        create_application_command::CreateApplicationCommand,
-        create_user_command::CreateUserCommand, demote_user_command::DemoteUserCommand,
-        promote_user_command::PromoteUserCommand,
-    },
-    core::catcher,
-};
-use crate::{
     commands::test::test_command::TestCommand,
     controllers::api::{account, application, auth},
     domain::repository::{
@@ -30,12 +21,26 @@ use crate::{
         cron_log_middleware::CronLogMiddleware, refresh_token_middleware::RefreshTokenMiddleware,
         user_middleware::UserMiddleware,
     },
-    security::handlers::application_security::ApplicationSecurityVoter,
+    security::voters::application_security::ApplicationSecurityVoter,
 };
-use crate::{controllers::api::user, security::handlers::user_security::UserSecurityVoter};
-use crate::{controllers::app, security::handlers::account_security::AccountSecurityVoter};
+use crate::{
+    commands::{
+        app::{
+            create_account_command::CreateAccountCommand,
+            create_application_command::CreateApplicationCommand,
+            create_user_command::CreateUserCommand, demote_user_command::DemoteUserCommand,
+            promote_user_command::PromoteUserCommand,
+        },
+        scaffold::generate_scaffold::GenerateScaffold,
+    },
+    core::catcher,
+};
+use crate::{controllers::api::user, security::voters::user_security::UserSecurityVoter};
+use crate::{controllers::app, security::voters::account_security::AccountSecurityVoter};
 use rocket::{Build, Rocket};
 use std::sync::Arc;
+
+// __IMPORTS__
 
 #[allow(clippy::redundant_clone, unused_mut)]
 pub fn build() -> Rocket<Build> {
@@ -59,6 +64,7 @@ pub fn build() -> Rocket<Build> {
     let cron_log_rep = CronLogRepository::new(db_state.clone());
     let application_rep = ApplicationRepository::new(db_state.clone());
     let account_rep = AccountRepository::new(db_state.clone());
+    // __REPOSITORY__
 
     //
     // -- middleware initialisation --
@@ -69,6 +75,7 @@ pub fn build() -> Rocket<Build> {
     let cron_log_middleware = CronLogMiddleware::new(cron_log_rep.clone());
     let application_middleware = ApplicationMiddleware::new(application_rep.clone());
     let account_middleware = AccountMiddleware::new(account_rep.clone());
+    // __MIDDLEWARE__
 
     //
     // -- command registry initialization --
@@ -101,6 +108,7 @@ pub fn build() -> Rocket<Build> {
         cron_log_middleware.clone(),
         user_middleware.clone(),
     )));
+
     //
     // -- security --
     //
@@ -108,6 +116,7 @@ pub fn build() -> Rocket<Build> {
     security.add_voter(Box::<AccountSecurityVoter>::default());
     security.add_voter(Box::<ApplicationSecurityVoter>::default());
     security.add_voter(Box::<UserSecurityVoter>::default());
+    // __SECURITY__
 
     //
     // -- fixtures --
@@ -127,6 +136,7 @@ pub fn build() -> Rocket<Build> {
         // add actions when on dev
 
         command_registry.add(Arc::new(TestCommand::new(cron_log_middleware.clone())));
+        command_registry.add(Arc::new(GenerateScaffold::new(cron_log_middleware.clone())));
     }
 
     build = build
@@ -145,6 +155,7 @@ pub fn build() -> Rocket<Build> {
                 user::user_create,
                 user::user_update,
                 user::user_delete,
+                // __CONTROLLERS__
             ],
         )
         // catchers
@@ -160,6 +171,7 @@ pub fn build() -> Rocket<Build> {
         .manage(cron_log_middleware)
         .manage(application_middleware)
         .manage(account_middleware)
+        // __MANAGE__
         // fairings
         .attach(DatabaseMigrations::default())
         .attach(JWTCertificatesFairing::default())

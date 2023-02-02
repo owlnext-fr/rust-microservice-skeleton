@@ -45,6 +45,12 @@ impl ConsoleIO {
         self.stdout.write_line(text).unwrap();
     }
 
+    pub fn writeln_bold(&self, text: &str) {
+        self.stdout
+            .write_line(&format!("{}", style(text).white().bold()))
+            .unwrap();
+    }
+
     pub fn new_line(&self) {
         self.stdout.write_line("").unwrap();
     }
