@@ -9,7 +9,7 @@ use crate::{
     deny_access_unless_granted,
     domain::dto::account::{AccountDetailsDTO, AccountListItemDTO},
     exceptions::dto::http_exception::HttpException,
-    http_exception,
+    http_exception, http_ok,
     middlewares::account_middleware::AccountMiddleware,
 };
 
@@ -34,7 +34,7 @@ pub fn account_list(
 
     let dto_list = account_middleware.to_list_dto(list);
 
-    Ok(ApiResponse::ok(Json(dto_list)))
+    http_ok!(dto_list)
 }
 
 #[get("/accounts/<id>", format = "json")]
@@ -63,5 +63,5 @@ pub fn account_details(
     let account = account.unwrap();
     let account_details_dto = account_middleware.to_details_dto(&account);
 
-    Ok(ApiResponse::ok(Json(account_details_dto)))
+    http_ok!(account_details_dto)
 }

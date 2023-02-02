@@ -32,6 +32,7 @@ use crate::{
     },
     security::handlers::application_security::ApplicationSecurityVoter,
 };
+use crate::{controllers::api::user, security::handlers::user_security::UserSecurityVoter};
 use crate::{controllers::app, security::handlers::account_security::AccountSecurityVoter};
 use rocket::{Build, Rocket};
 use std::sync::Arc;
@@ -106,6 +107,7 @@ pub fn build() -> Rocket<Build> {
     let mut security = Security::<dyn SecurityVoter>::new();
     security.add_voter(Box::<AccountSecurityVoter>::default());
     security.add_voter(Box::<ApplicationSecurityVoter>::default());
+    security.add_voter(Box::<UserSecurityVoter>::default());
 
     //
     // -- fixtures --
@@ -137,7 +139,10 @@ pub fn build() -> Rocket<Build> {
                 account::account_list,
                 account::account_details,
                 application::application_list,
-                application::application_details
+                application::application_details,
+                user::user_list,
+                user::user_details,
+                user::user_create
             ],
         )
         // catchers

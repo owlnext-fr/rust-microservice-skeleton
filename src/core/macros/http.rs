@@ -18,3 +18,10 @@ macro_rules! deny_access_unless_granted {
         }
     }};
 }
+
+#[macro_export]
+macro_rules! http_ok {
+    ($output:expr) => {{
+        return Ok(ApiResponse::ok(Json($output)));
+    }};
+}

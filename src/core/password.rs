@@ -3,6 +3,8 @@ use rand_core::OsRng;
 
 use super::password_generator;
 
+use fancy_regex::Regex;
+
 pub fn generate() -> String {
     password_generator::get().generate_one().unwrap()
 }
@@ -34,4 +36,12 @@ pub fn compare_hashed(clear_password: &str, hashed_password: &str) -> bool {
     Argon2::default()
         .verify_password(clear_password.as_bytes(), &parsed_hash)
         .is_ok()
+}
+
+pub fn is_strong(password: String) -> bool {
+    let re =
+        Regex::new(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&_-])[A-Za-z\d@$!%*#?&_-]{8,50}")
+            .unwrap();
+
+    re.is_match(&password).unwrap_or(false)
 }

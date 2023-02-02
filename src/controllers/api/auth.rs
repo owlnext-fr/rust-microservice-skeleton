@@ -1,4 +1,4 @@
-use crate::{core::validation::Validated, http_exception};
+use crate::{core::validation::Validated, http_exception, http_ok};
 use rocket::{http::Status, serde::json::Json, State};
 
 use crate::{
@@ -43,10 +43,10 @@ pub fn token(
         );
     }
 
-    Ok(ApiResponse::ok(Json(JWTTokenOutputDTO {
+    http_ok!(JWTTokenOutputDTO {
         token: jwt_token_result.unwrap(),
         refresh_token: refresh_token_result.unwrap().token,
-    })))
+    });
 }
 
 #[post("/refresh-token", format = "json", data = "<input>")]
@@ -101,8 +101,8 @@ pub fn refresh_token(
         );
     }
 
-    Ok(ApiResponse::ok(Json(JWTTokenOutputDTO {
+    http_ok!(JWTTokenOutputDTO {
         token: jwt_token_result.unwrap(),
         refresh_token: refresh_token_result.unwrap().token,
-    })))
+    });
 }

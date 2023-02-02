@@ -66,7 +66,7 @@ impl ConsoleCommand for DemoteUserCommand {
         io.step(2, 2, "Demoting user {user_id}...");
         let user = self.user_middleware.demote(&user)?;
 
-        io.success(&format!("User {} successfully promoted !", user.login));
+        io.success(&format!("User {} successfully demoted !", user.login));
 
         command_success!();
     }

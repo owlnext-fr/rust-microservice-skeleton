@@ -63,6 +63,7 @@ impl ApplicationRepository {
             INNER JOIN users u on u.application_id = app.id AND u.is_deleted = false and u.id = $1
             WHERE app.is_deleted = false
             AND app.id = $2
+            ORDER BY app.created_date ASC
             LIMIT $3
             OFFSET $4
         ",

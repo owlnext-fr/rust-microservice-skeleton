@@ -1,5 +1,6 @@
 use anyhow::bail;
 use argon2::password_hash::SaltString;
+use chrono::Utc;
 use thiserror::Error;
 
 use crate::{
@@ -7,10 +8,14 @@ use crate::{
         configuration::ConfigState,
         jwt,
         password::{self, generate_salt, hash},
+        security::is_admin,
     },
     domain::{
-        dto::auth::LoginInputDTO,
-        model::user::{NewUser, User, ROLE_USER_ADMIN},
+        dto::{
+            auth::LoginInputDTO,
+            user::{NewUserInputDTO, UserDetailsDTO, UserListItemDTO},
+        },
+        model::user::{NewUser, User, ROLE_USER, ROLE_USER_ADMIN},
         repository::user_repository::UserRepository,
     },
 };
@@ -72,7 +77,7 @@ impl UserMiddleware {
 
         let jwt_claims = jwt_validation_result.unwrap();
 
-        let user_fetch_result = self.repository.find_by_id(jwt_claims.custom.user_id)?;
+        let user_fetch_result = self.repository.find_one_by_id(jwt_claims.custom.user_id)?;
 
         if user_fetch_result.is_none() {
             return Err(JWTAuthenticationError::UserNotFound(jwt_claims.custom.user_id).into());
@@ -99,15 +104,52 @@ impl UserMiddleware {
     pub fn find_one_by_id(&self, user_id: &str) -> anyhow::Result<Option<User>> {
         let user_real_id = user_id.parse::<i32>()?;
 
-        let user_found = self.repository.find_by_id(user_real_id)?;
+        let user_found = self.repository.find_one_by_id(user_real_id)?;
 
         Ok(user_found)
     }
 
-    pub fn find_by_login(&self, login: &str) -> anyhow::Result<User> {
-        let user = self.repository.find_by_login(login)?;
+    pub fn find_one_by_login(&self, login: &str) -> anyhow::Result<Option<User>> {
+        let user = self.repository.find_one_by_login(login)?;
 
         Ok(user)
+    }
+
+    pub fn find_for_user(
+        &self,
+        user: &User,
+        page: i32,
+        per_page: i32,
+    ) -> anyhow::Result<Vec<User>> {
+        if is_admin(user) {
+            let users =
+                self.repository
+                    .find_all_for_application_id(user.application_id, page, per_page)?;
+
+            Ok(users)
+        } else if page == 1 {
+            let itself = user.clone();
+            Ok(vec![itself])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn find_one_for_user(&self, id: &str, user: &User) -> anyhow::Result<Option<User>> {
+        let id_parsed = id.parse::<i32>()?;
+
+        if is_admin(user) {
+            let user = self
+                .repository
+                .find_one_for_user_and_application(id_parsed, user.application_id)?;
+
+            Ok(user)
+        } else if user.id == id_parsed {
+            let cloned = user.clone();
+            return Ok(Some(cloned));
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn promote(&self, user: &User) -> anyhow::Result<User> {
@@ -140,8 +182,38 @@ impl UserMiddleware {
         Ok(user)
     }
 
+    pub fn create_from_user_input(
+        &self,
+        creator: &User,
+        dto: NewUserInputDTO,
+    ) -> anyhow::Result<User> {
+        let salt = generate_salt();
+
+        let new_user = NewUser {
+            email: Some(&dto.email),
+            first_name: Some(&dto.first_name),
+            last_name: Some(&dto.last_name),
+            login: &dto.login,
+            roles: vec![ROLE_USER],
+            password: &dto.password,
+            salt: Some(salt.as_str()),
+            application_id: creator.application_id,
+            created_date: Utc::now(),
+            created_by: Some(creator.id),
+            deleted_date: None,
+            deleted_by: None,
+            is_deleted: false,
+        };
+
+        self.create(new_user)
+    }
+
     pub fn create(&self, new_user: NewUser) -> anyhow::Result<User> {
         let mut new_user = new_user.clone();
+
+        if self.find_one_by_login(new_user.login)?.is_some() {
+            bail!("A user with login {} already exists !", new_user.login);
+        }
 
         let maybe_clear_password = new_user.password;
         let new_salt = generate_salt();
@@ -166,5 +238,19 @@ impl UserMiddleware {
 
     pub fn update(&self, user: &User) -> anyhow::Result<User> {
         self.repository.update(user)
+    }
+
+    pub fn to_list_dto(&self, users: Vec<User>) -> Vec<UserListItemDTO> {
+        let mut list = Vec::<UserListItemDTO>::new();
+
+        for user in users.iter() {
+            list.push(UserListItemDTO::from(user));
+        }
+
+        list
+    }
+
+    pub fn to_details_dto(&self, application: &User) -> UserDetailsDTO {
+        UserDetailsDTO::from(application)
     }
 }

@@ -64,6 +64,7 @@ impl AccountRepository {
             FROM account ac
             INNER JOIN application app ON app.account_id = ac.id AND app.id = $1 AND app.is_deleted = false
             WHERE ac.is_deleted = false
+            ORDER BY ac.created_date ASC
             LIMIT $2
             OFFSET $3
         ",

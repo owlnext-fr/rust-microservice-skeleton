@@ -9,7 +9,7 @@ use crate::{
     deny_access_unless_granted,
     domain::dto::application::{ApplicationDetailsDTO, ApplicationListItemDTO},
     exceptions::dto::http_exception::HttpException,
-    http_exception,
+    http_exception, http_ok,
     middlewares::application_middleware::ApplicationMiddleware,
 };
 
@@ -34,7 +34,7 @@ pub fn application_list(
 
     let dto_list = application_middleware.to_list_dto(list);
 
-    Ok(ApiResponse::ok(Json(dto_list)))
+    http_ok!(dto_list);
 }
 
 #[get("/applications/<id>", format = "json")]
@@ -63,5 +63,5 @@ pub fn application_details(
     let account = application.unwrap();
     let account_details_dto = application_middleware.to_details_dto(&account);
 
-    Ok(ApiResponse::ok(Json(account_details_dto)))
+    http_ok!(account_details_dto);
 }
