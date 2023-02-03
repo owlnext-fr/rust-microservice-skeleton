@@ -4,7 +4,7 @@ use crate::{
     core::database::{DbPoolState, DB},
     domain::{
         model::__MODULE_NAME__::{__DATA_CLASS_STRUCT_NAME__, __NEW_DATA_CLASS_STRUCT_NAME__},
-        schema::__MODULE_NAME_PLURAL__::*,
+        schema::__MODULE_NAME__s::{self, *},
     },
 };
 
@@ -29,7 +29,7 @@ impl __DATA_CLASS_STRUCT_NAME__Repository {
         __MODULE_NAME___id: i32,
     ) -> Result<Option<__DATA_CLASS_STRUCT_NAME__>> {
         let __MODULE_NAME__ = __MODULE_NAME_PLURAL__::table
-            .filter(id.eq(user_id))
+            .filter(id.eq(__MODULE_NAME___id))
             .filter(is_deleted.eq(false))
             .get_result::<__DATA_CLASS_STRUCT_NAME__>(&mut self.get_db())
             .optional()?;

@@ -1,4 +1,3 @@
-use crate::core::security::is_admin;
 use crate::domain::{
     dto::__MODULE_NAME__::{
         New__DATA_CLASS_STRUCT_NAME__InputDTO, Update__DATA_CLASS_STRUCT_NAME__InputDTO,
