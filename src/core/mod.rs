@@ -2,6 +2,7 @@ pub mod catcher;
 pub mod commands;
 pub mod configuration;
 pub mod database;
+pub mod dirs;
 pub mod fairings;
 pub mod guards;
 pub mod jwt;

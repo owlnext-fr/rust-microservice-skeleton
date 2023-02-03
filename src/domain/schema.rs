@@ -51,14 +51,14 @@ diesel::table! {
         first_name -> Nullable<Varchar>,
         last_name -> Nullable<Varchar>,
         login -> Varchar,
-        roles -> Array<Text>,
+        roles -> Array<Nullable<Text>>,
         password -> Text,
         salt -> Nullable<Text>,
         application_id -> Int4,
         created_date -> Timestamptz,
-        created_by -> Nullable<Int4>,
+        created_by -> Int4,
         deleted_date -> Nullable<Timestamptz>,
-        deleted_by -> Nullable<Int4>,
+        deleted_by -> Int4,
         is_deleted -> Bool,
     }
 }
