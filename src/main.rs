@@ -17,6 +17,7 @@ pub mod core;
 pub mod domain;
 pub mod exceptions;
 pub mod fixtures;
+pub mod libraires;
 pub mod middlewares;
 pub mod security;
 
