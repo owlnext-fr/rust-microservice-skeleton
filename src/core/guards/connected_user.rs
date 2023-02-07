@@ -11,29 +11,39 @@ use crate::{
     middlewares::user_middleware::{JWTAuthenticationError, UserMiddleware},
 };
 
+/// Connected user guard to get the connected user over controllers.
 #[derive(Debug, Clone)]
 pub struct ConnectedUser {
+    /// the currently connected user.
     pub user: User,
 }
 
+/// Every error state that could happen during user authentication & validation.
 #[derive(Debug, Error)]
 pub enum AuthenticationError {
+    /// No JWT header found in the request.
     #[error("JWT header not found")]
     HeaderNotFound,
+    /// The JWT header is invalid.
     #[error("Invalid JWT header")]
     InvalidHeader,
+    /// The JWT header is unparsable.
     #[error("Invalid JWT header")]
     MalformedHeader,
+    /// The JWT token is not formatted properly, or outdated.
     #[error("Invalid JWT token, perhaps malformatted or outdated")]
     InvalidJWT,
+    /// The user contained in the JWT token is invalid.
     #[error("JWT token user not found")]
     UserNotFound,
 }
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for ConnectedUser {
+    /// error type returned in case of authentication error.
     type Error = AuthenticationError;
 
+    /// Guard interceptor extracting connected user from the request.
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let user_middleware = req.rocket().state::<UserMiddleware>().unwrap();
 

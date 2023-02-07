@@ -7,6 +7,7 @@ use rocket::{
 
 use crate::core::{commands::console_command_utils::ConsoleIO, jwt};
 
+/// a fairing struct to handle SSL certificate generation upon ignite
 #[derive(Default)]
 pub struct JWTCertificatesFairing {}
 
@@ -19,6 +20,7 @@ impl Fairing for JWTCertificatesFairing {
         }
     }
 
+    /// this fairing will create private and public certificates for JWT authentication upon ignite.
     async fn on_ignite(&self, rocket: Rocket<Build>) -> Result {
         let io = ConsoleIO::new();
 
@@ -57,7 +59,7 @@ impl Fairing for JWTCertificatesFairing {
         }
 
         if needs_generation {
-            // TODO refactor
+            // TODO: refactor to avoid calling shell sub process
             let mut child = Command::new("sh");
 
             let certs_creation = child

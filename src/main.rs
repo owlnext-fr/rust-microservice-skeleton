@@ -20,14 +20,20 @@ pub mod fixtures;
 pub mod middlewares;
 pub mod security;
 
+/// main entrypoint of the program.
 #[rocket::main]
 async fn main() -> Result<()> {
+    // parsing CLI class to dispatch action, either trigger the launch
+    // of the web API service, or execute a given command.
     let cli = CLI::parse();
 
+    // building the rocket to serve as a pseudo dependency manager
     let rocket = core::rocket_factory::build();
 
     match &cli.command {
+        // launch web API service
         Command::Launch => launcher::engage(rocket).await?,
+        // executing given command
         Command::Console { sub_command, args } => launcher::warp(rocket, sub_command, args).await?,
     }
 

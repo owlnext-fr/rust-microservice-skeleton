@@ -12,6 +12,8 @@ use std::{
     thread, time, vec,
 };
 
+/// this command is only intended as an example of the ConsoleIO module.
+/// this will be included in a dev environment, but not the release.
 pub struct TestCommand {
     cron_log_middleware: CronLogMiddleware,
 }

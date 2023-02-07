@@ -20,6 +20,7 @@ use anyhow::Result;
 use chrono::Utc;
 use ulid::Ulid;
 
+/// a command to create apploication + user.
 pub struct CreateApplicationCommand {
     cron_log_middleware: CronLogMiddleware,
     account_middleware: AccountMiddleware,

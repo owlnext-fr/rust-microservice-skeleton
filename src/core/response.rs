@@ -7,13 +7,17 @@ use serde::Serialize;
 
 use crate::exceptions::dto::http_exception::HttpException;
 
+/// Generic struct to represent an JSON HTTP response transport (e.g. representation in rocket processes).
 #[derive(Debug)]
 pub struct ApiResponse<T> {
+    /// JSON body of the response.
     pub json: Json<T>,
+    /// HTTP status of the response
     pub status: Status,
 }
 
 impl<T> ApiResponse<T> {
+    /// Shorthand method to generate an HTTP 200 - OK with a JSON body
     pub fn ok(output: Json<T>) -> Self {
         ApiResponse {
             json: output,
@@ -21,6 +25,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// Shorthand method to generate an HTTP response transport representation with a body and a status.
     pub fn custom(output: Json<T>, status: Status) -> Self {
         ApiResponse {
             json: output,
@@ -29,7 +34,10 @@ impl<T> ApiResponse<T> {
     }
 }
 
+/// Implementation of the ApiResponse transport for HttpException responses.
+/// This is usefull in controllers to return a business-logic error.
 impl ApiResponse<HttpException> {
+    /// Generates an automated "exception response" for the given status.
     pub fn from_status(status: Status) -> Self {
         ApiResponse {
             json: Json(HttpException::from_status(status)),
@@ -37,6 +45,7 @@ impl ApiResponse<HttpException> {
         }
     }
 
+    /// Generates an automated "exception response" for the given status and a reason.
     pub fn from_status_with_reason(status: Status, reason: &str) -> Self {
         ApiResponse {
             json: Json(HttpException::from_status_with_reason(
@@ -48,11 +57,13 @@ impl ApiResponse<HttpException> {
     }
 }
 
+/// Representation of an HTTP 204 - No Content response
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct NoContentResponse;
 
 impl ApiResponse<NoContentResponse> {
+    /// Shorthand method for ApiResponse to create an HTTP 204 - No Content response.
     pub fn no_content() -> Self {
         ApiResponse {
             json: Json(NoContentResponse {}),
@@ -63,6 +74,7 @@ impl ApiResponse<NoContentResponse> {
 
 #[rocket::async_trait]
 impl<'r, T: serde::Serialize> Responder<'r, 'r> for ApiResponse<T> {
+    /// Responder to handle ApiResponse transport
     fn respond_to(self, req: &Request) -> response::Result<'r> {
         if self.status == Status::NoContent {
             // builds a response with no content
@@ -71,7 +83,7 @@ impl<'r, T: serde::Serialize> Responder<'r, 'r> for ApiResponse<T> {
                 .header(ContentType::JSON)
                 .ok();
         } else if self.status == Status::InternalServerError && !cfg!(debug_assertions) {
-            // intercepts 500 errors to avoid runtime error diffusion.
+            // intercepts 500 errors to avoid runtime error diffusion (e.g. database errors or potentialy secure information about the application).
             let json = Json(HttpException::from_status(self.status));
 
             return Response::build_from(json.respond_to(req).unwrap())
@@ -87,7 +99,9 @@ impl<'r, T: serde::Serialize> Responder<'r, 'r> for ApiResponse<T> {
     }
 }
 
+/// Generic transport for pre-controller (e.g. fairing) business logic errors to store in the request local cache.
 #[derive(Default, Debug)]
 pub struct ErrorMessage {
+    /// The error message
     pub message: String,
 }

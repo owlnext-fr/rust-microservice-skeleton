@@ -19,6 +19,7 @@ use crate::{
 use anyhow::Result;
 use chrono::Utc;
 
+/// a command to create a user.
 pub struct CreateUserCommand {
     cron_log_middleware: CronLogMiddleware,
     account_middleware: AccountMiddleware,

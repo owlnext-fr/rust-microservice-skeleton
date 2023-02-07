@@ -11,6 +11,7 @@ use crate::{
 
 use anyhow::Result;
 
+/// a command to demote (e.g. removing administration role) to a user.
 pub struct DemoteUserCommand {
     cron_log_middleware: CronLogMiddleware,
     user_middleware: UserMiddleware,

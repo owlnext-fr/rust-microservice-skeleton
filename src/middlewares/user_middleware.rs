@@ -20,6 +20,7 @@ use crate::{
     },
 };
 
+/// Error states for authentication
 #[derive(Debug, Error)]
 pub enum AuthenticationError {
     #[error("User {} not found.", _0)]
@@ -28,6 +29,7 @@ pub enum AuthenticationError {
     WrongPassword(i32),
 }
 
+/// Error states for JWT authentication
 #[derive(Debug, Error)]
 pub enum JWTAuthenticationError {
     #[error("Invalid token")]
@@ -36,6 +38,7 @@ pub enum JWTAuthenticationError {
     UserNotFound(i32),
 }
 
+/// User middleware.
 #[derive(Clone)]
 pub struct UserMiddleware {
     repository: UserRepository,
@@ -43,6 +46,7 @@ pub struct UserMiddleware {
 }
 
 impl UserMiddleware {
+    /// constructor.
     pub fn new(repository: UserRepository, configuration: ConfigState) -> Self {
         Self {
             repository,
@@ -50,6 +54,7 @@ impl UserMiddleware {
         }
     }
 
+    /// authenticates a user with a given LoginInputDTO.
     pub fn authenticate_user_from_input(&self, input: &LoginInputDTO) -> anyhow::Result<User> {
         let user_found = self.repository.load_user_by_login(input.login.as_str());
 
@@ -66,6 +71,7 @@ impl UserMiddleware {
         Err(AuthenticationError::UserNotFound(input.login.clone()).into())
     }
 
+    /// authenticates a user from a given JWT token. This will also validate the given JWT prior to authentication.
     pub fn authenticate_user_from_jwt(&self, jwt_token: &str) -> anyhow::Result<User> {
         let issuer = self.configuration.get_string("package.name").unwrap();
 
@@ -86,6 +92,7 @@ impl UserMiddleware {
         Ok(user_fetch_result.unwrap())
     }
 
+    /// create a valid JWT token for a given user.
     pub fn create_jwt_for_user(&self, user: &User) -> anyhow::Result<String> {
         let claim = jwt::APIClaim {
             user_id: user.id,
@@ -101,6 +108,7 @@ impl UserMiddleware {
         Ok(jwt_token)
     }
 
+    /// finds one user by its ID.
     pub fn find_one_by_id(&self, user_id: &str) -> anyhow::Result<Option<User>> {
         let user_real_id = user_id.parse::<i32>()?;
 
@@ -109,12 +117,15 @@ impl UserMiddleware {
         Ok(user_found)
     }
 
+    /// finds one user by its login.
     pub fn find_one_by_login(&self, login: &str) -> anyhow::Result<Option<User>> {
         let user = self.repository.find_one_by_login(login)?;
 
         Ok(user)
     }
 
+    /// finds all users for a given user.
+    /// this function use pagination.
     pub fn find_for_user(
         &self,
         user: &User,
@@ -135,6 +146,7 @@ impl UserMiddleware {
         }
     }
 
+    /// find one given user by its ID, for a given user.
     pub fn find_one_for_user(&self, id: &str, user: &User) -> anyhow::Result<Option<User>> {
         let id_parsed = id.parse::<i32>()?;
 
@@ -152,6 +164,7 @@ impl UserMiddleware {
         }
     }
 
+    /// promotes a user (e.g. add the ADMIN role to it)
     pub fn promote(&self, user: &User) -> anyhow::Result<User> {
         if user.roles.contains(&ROLE_USER_ADMIN.into()) {
             bail!("User already promoted !");
@@ -165,6 +178,7 @@ impl UserMiddleware {
         Ok(user)
     }
 
+    /// demotes a user (e.g. remove the ADMIN role from it)
     pub fn demote(&self, user: &User) -> anyhow::Result<User> {
         if !user.roles.contains(&ROLE_USER_ADMIN.into()) {
             bail!("User not promoted !");
@@ -182,6 +196,7 @@ impl UserMiddleware {
         Ok(user)
     }
 
+    /// creates a user from NewUserInputDTO and register it to the database.
     pub fn create_from_user_input(
         &self,
         creator: &User,
@@ -208,6 +223,7 @@ impl UserMiddleware {
         self.create(new_user)
     }
 
+    /// updates a user given a UpdateUserInputDTO, and register it to the database.
     pub fn update_from_user_input(
         &self,
         updater: &User,
@@ -227,6 +243,7 @@ impl UserMiddleware {
         self.update(&user)
     }
 
+    /// transforms a NewUser into a User, applying creation logic to it, and register it to the database.
     pub fn create(&self, new_user: NewUser) -> anyhow::Result<User> {
         let mut new_user = new_user.clone();
 
@@ -255,10 +272,12 @@ impl UserMiddleware {
         Ok(user)
     }
 
+    /// updates a User into the database.
     pub fn update(&self, user: &User) -> anyhow::Result<User> {
         self.repository.update(user)
     }
 
+    /// apply deletion logic to a User and register it as deleted in the database.
     pub fn delete(&self, user_to_delete: &User, deleter: &User) -> anyhow::Result<bool> {
         let mut cloned = user_to_delete.clone();
 
@@ -275,6 +294,7 @@ impl UserMiddleware {
         Ok(true)
     }
 
+    /// transforms a list of User to a list of UserListItemDTO
     pub fn to_list_dto(&self, users: Vec<User>) -> Vec<UserListItemDTO> {
         let mut list = Vec::<UserListItemDTO>::new();
 
@@ -285,6 +305,7 @@ impl UserMiddleware {
         list
     }
 
+    /// transforms a User into a UserDetailsDTO
     pub fn to_details_dto(&self, application: &User) -> UserDetailsDTO {
         UserDetailsDTO::from(application)
     }

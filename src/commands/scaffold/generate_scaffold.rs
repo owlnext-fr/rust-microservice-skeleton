@@ -12,6 +12,7 @@ use inflections::Inflect;
 
 use anyhow::Result;
 
+/// a command to generate an "Entity" scaffold for this application.
 #[derive(Debug, Clone)]
 struct ScaffoldNames {
     pub module_name: String,

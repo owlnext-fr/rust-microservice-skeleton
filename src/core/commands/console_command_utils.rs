@@ -9,20 +9,19 @@ use console::{style, Emoji, Term};
 use indicatif::ProgressBar;
 use inquire::{Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 
+/// separator for title outputs
 const HEAVY_SEPARATOR: &str = "==================================";
+
+/// separator for section output
 const LIGHT_SEPARATOR: &str = "----------------------------------";
+
+/// meta separator for lists
 pub const LIST_SEPARATOR: &str = "$__SEPARATOR__$";
+
+/// real separator for lists
 const LIST_REAL_SEPARATOR: &str = "----------";
 
-pub enum InputType {
-    Text,
-    Date,
-    Select,
-    MultiSelect,
-    Confirm,
-    Password,
-}
-
+/// handler struct for standard outputs.
 pub struct ConsoleIO {
     stdout: Term,
     stderr: Term,
@@ -30,6 +29,7 @@ pub struct ConsoleIO {
 
 #[allow(clippy::new_without_default)]
 impl ConsoleIO {
+    /// creates an instance of ConsoleIO
     pub fn new() -> Self {
         Self {
             stdout: Term::stdout(),
@@ -37,24 +37,29 @@ impl ConsoleIO {
         }
     }
 
+    /// writes to STDOUT without line return
     pub fn write(&self, text: &str) {
         self.stdout.write_str(text).unwrap();
     }
 
+    /// writes to STDOUT with line return
     pub fn writeln(&self, text: &str) {
         self.stdout.write_line(text).unwrap();
     }
 
+    /// writes to STDOUT with line return and bold font
     pub fn writeln_bold(&self, text: &str) {
         self.stdout
             .write_line(&format!("{}", style(text).white().bold()))
             .unwrap();
     }
 
+    /// creates a new empty line in STDOUT
     pub fn new_line(&self) {
         self.stdout.write_line("").unwrap();
     }
 
+    /// creates a title formatted output
     pub fn title(&self, title: &str) {
         self.new_line();
         self.stdout
@@ -65,6 +70,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a section formatted output
     pub fn section(&self, title: &str) {
         self.new_line();
         self.stdout
@@ -75,12 +81,19 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a comment formatted output
     pub fn comment(&self, comment: &str) {
         self.stdout
             .write_line(&format!("// {}", style(comment).white().dim().bold()))
             .unwrap();
     }
 
+    /// creates a "step".
+    ///
+    /// Example:
+    /// ```text
+    /// [1/4] doing things...
+    /// ```
     pub fn step(&self, nb: usize, max: usize, message: &str) {
         let step_str = format!("[{nb}/{max}]");
 
@@ -93,6 +106,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a success output
     pub fn success(&self, text: &str) {
         let success_symb_str = format!("[{} SUCCESS]", Emoji("✅", "✓"));
 
@@ -105,6 +119,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a error output
     pub fn error(&self, text: &str) {
         let error_symb_str = format!("[{} ERROR]", Emoji("❌", "X"));
 
@@ -117,6 +132,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a warning output
     pub fn warning(&self, text: &str) {
         let warning_symb_str = format!("[{}  WARNING]", Emoji("⚠️", "!"));
 
@@ -129,6 +145,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a note output
     pub fn note(&self, text: &str) {
         let note_symb_str = format!("[{} NOTE]", Emoji("📘", "🕮"));
 
@@ -141,6 +158,7 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a info output
     pub fn info(&self, text: &str) {
         let note_symb_str = format!("[{} INFO]", Emoji("📝", "▤"));
 
@@ -153,12 +171,14 @@ impl ConsoleIO {
             .unwrap();
     }
 
+    /// creates a formatted (e.g. unordered) listing
     pub fn listing(&self, list: Vec<&str>) {
         list.iter()
             .map(|item| self.writeln(&format!("• {item}")))
             .for_each(drop);
     }
 
+    /// creates a data table with headers
     pub fn table(&self, headers: Vec<&str>, data: Vec<Vec<&str>>) {
         let mut table = Table::new();
 
@@ -180,6 +200,9 @@ impl ConsoleIO {
         self.writeln(&format!("{table}"));
     }
 
+    /// creates a key-value pair display.
+    ///
+    /// You can use LIST_SEPARATOR to split your listings
     pub fn key_value_pair(&self, values: Vec<(&str, String)>) {
         let mut table = Table::new();
         table.load_preset(NOTHING);
@@ -201,6 +224,7 @@ impl ConsoleIO {
         self.writeln(&format!("{table}"));
     }
 
+    /// creates a definition list
     pub fn definition_list(&self, values: BTreeMap<String, String>) {
         let mut table = Table::new();
         table.load_preset(NOTHING);
@@ -224,18 +248,38 @@ impl ConsoleIO {
         self.writeln(&format!("{table}"));
     }
 
+    /// shorthand method to create a text question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_text<'a>(&'a self, question: &'a str) -> Text {
         Text::new(question)
     }
 
+    /// shorthand method to create a date question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_date<'a>(&'a self, question: &'a str) -> DateSelect {
         DateSelect::new(question)
     }
 
+    /// shorthand method to create a select (e.g. choice) question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_select<'a>(&'a self, question: &'a str, choices: Vec<&'a str>) -> Select<&'a str> {
         Select::new(question, choices)
     }
 
+    /// shorthand method to create a multi-select (e.g. multiple choice) question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_multi_select<'a>(
         &'a self,
         question: &'a str,
@@ -244,14 +288,25 @@ impl ConsoleIO {
         MultiSelect::new(question, choices)
     }
 
+    /// shorthand method to create a confirm (e.g. yes/no) question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_confirm<'a>(&'a self, question: &'a str) -> Confirm {
         Confirm::new(question)
     }
 
+    /// shorthand method to create a password (e.g. hidden) question for the user.
+    ///
+    /// **Note:** You must use the `prompt()` method to actually display it to the user.
+    ///
+    /// See https://github.com/mikaelmello/inquire
     pub fn input_password<'a>(&'a self, question: &'a str) -> Password {
         Password::new(question)
     }
 
+    /// shorthand method to directly ask a question to the user.
     pub fn ask_question(&self, question: &str) -> String {
         let mut response = self.input_text(question).prompt();
 
@@ -264,6 +319,7 @@ impl ConsoleIO {
         response.unwrap()
     }
 
+    /// shorthand method to directly ask a question to the user with a default response.
     pub fn ask_question_default(&self, question: &str, default: &str) -> String {
         let mut response = self.input_text(question).with_default(default).prompt();
 
@@ -276,6 +332,7 @@ impl ConsoleIO {
         response.unwrap()
     }
 
+    /// shorthand method to directly ask a confirmation to the user.
     pub fn ask_confirm(&self, question: &str) -> bool {
         let mut response = self.input_confirm(question).with_default(true).prompt();
 
@@ -288,6 +345,7 @@ impl ConsoleIO {
         response.unwrap()
     }
 
+    /// shorthand method to directly ask a password to the user.
     pub fn ask_password(&self, question: &str) -> String {
         let mut response = self
             .input_password(question)
@@ -306,10 +364,21 @@ impl ConsoleIO {
         response.unwrap()
     }
 
+    /// creates a progress bar for the user.
+    ///
+    /// - use `inc(u64)` to increment the bar.
+    /// - use `finish()` to finish the progress.
+    ///
+    /// See https://docs.rs/indicatif/latest/indicatif/struct.ProgressBar.html
     pub fn create_progress_bar(&self, max: u64) -> ProgressBar {
         ProgressBar::new(max)
     }
 
+    /// creates a spinner for the user.
+    ///
+    /// - use `tick()` to make the spinner progress.
+    ///
+    /// See https://docs.rs/indicatif/latest/indicatif/struct.ProgressBar.html
     pub fn create_spinner(&self) -> ProgressBar {
         ProgressBar::new_spinner()
     }

@@ -12,6 +12,7 @@ use crate::{
     },
 };
 
+/// Error states for refresh token validation.
 #[derive(Debug, Error)]
 pub enum JWTRefreshTokenValidationError {
     #[error("Token not found : {} ", _0)]
@@ -20,6 +21,7 @@ pub enum JWTRefreshTokenValidationError {
     Expired(String),
 }
 
+/// RefreshToken middleware.
 #[derive(Clone)]
 pub struct RefreshTokenMiddleware {
     repository: RefreshTokenRepository,
@@ -27,10 +29,12 @@ pub struct RefreshTokenMiddleware {
 }
 
 impl RefreshTokenMiddleware {
+    /// constructor.
     pub fn new(repository: RefreshTokenRepository, config: ConfigState) -> Self {
         Self { repository, config }
     }
 
+    /// Generates a valid refresh token for the given user, registering it into the database.
     pub fn generate_for_user(&self, user: &User) -> anyhow::Result<RefreshToken> {
         let token = password::generate_simple_sized(128);
         let refresh_ttl = self.config.get_int_or_default("jwt_refresh_ttl", 86400);
@@ -47,6 +51,7 @@ impl RefreshTokenMiddleware {
         Ok(refresh_token)
     }
 
+    /// checks if a given refresh token is a valid one.
     pub fn is_valid(
         &self,
         refresh_token: &str,

@@ -7,6 +7,7 @@ use rocket::{
     Orbit, Rocket,
 };
 
+/// this struct handle database migration at launch-time using fairing mechanism.
 #[derive(Default)]
 pub struct DatabaseMigrations {}
 
@@ -19,6 +20,7 @@ impl Fairing for DatabaseMigrations {
         }
     }
 
+    /// enables a connection to the database, then process missing migrations if any.
     async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
         let configuration = rocket.state::<ConfigState>().unwrap();
         let conn_url = configuration.get_string("database_url").unwrap();

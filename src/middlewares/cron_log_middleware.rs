@@ -6,16 +6,19 @@ use crate::domain::{
     repository::cron_log_repository::CronLogRepository,
 };
 
+/// CronLog middleware
 #[derive(Clone)]
 pub struct CronLogMiddleware {
     repository: CronLogRepository,
 }
 
 impl CronLogMiddleware {
+    /// constructor.
     pub fn new(repository: CronLogRepository) -> Self {
         Self { repository }
     }
 
+    /// creates and registers a new CronLog given a command and its arguments
     pub fn create_new(&self, command: &str, command_args: &str) -> Result<CronLog> {
         let new_cron_log = NewCronLog {
             command,
@@ -28,6 +31,7 @@ impl CronLogMiddleware {
         Ok(log)
     }
 
+    /// closes a given log with an exit status an optionnally an exit message.
     pub fn close(
         &self,
         cron_log: &CronLog,

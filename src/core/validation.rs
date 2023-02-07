@@ -14,6 +14,9 @@ use rocket::{
 use std::fmt::Debug;
 pub use validator::{Validate, ValidationErrors};
 
+// reimplementation of the rocket_validator crate to include JSON shunt errors upon serialization and validation.
+// original code https://github.com/somehowchris/rocket-validation
+
 #[derive(Clone, Debug)]
 pub struct Validated<T>(pub T);
 

@@ -42,6 +42,7 @@ use std::sync::Arc;
 
 // __IMPORTS__
 
+/// builder-typed function to create the rocket build containing all states, routes, fairings, etc.
 #[allow(clippy::redundant_clone, unused_mut)]
 pub fn build() -> Rocket<Build> {
     //

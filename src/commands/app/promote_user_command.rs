@@ -11,6 +11,7 @@ use crate::{
 
 use anyhow::Result;
 
+/// a command to promote (e.g. adding administration role) to a user.
 pub struct PromoteUserCommand {
     cron_log_middleware: CronLogMiddleware,
     user_middleware: UserMiddleware,

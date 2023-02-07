@@ -6,20 +6,28 @@ use rocket::{
 
 use crate::core::response::ErrorMessage;
 
+/// Default page number for pagination.
 const DEFAULT_PAGE: u16 = 0;
+/// Default number of item per page for pagination.
 const DEFAULT_PER_PAGE: u16 = 25;
 
+/// A struct representing pagination options for listings.
 #[derive(Debug, Clone)]
 pub struct Pagination {
     pub page: u16,
     pub per_page: u16,
 }
 
+/// Different states of errors that can encounter pagination extraction.
 #[derive(Debug)]
 pub enum PaginationError {
+    /// the page parameter is invalid.
     PageParseError,
+    /// the per_page parameter is invalid.
     PerPageParseError,
+    /// the page is <= 0
     ZeroPage,
+    /// the per_page is <= 0
     ZeroPerPage,
 }
 
