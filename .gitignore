@@ -23,5 +23,5 @@ storage/*/*
 public_storage/*/*
 !public_storage/*/.gitkeep
 
-# vscode config for local database connector
-.vscode/settings.json
+# vscode config
+.vscode

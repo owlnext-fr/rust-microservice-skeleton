@@ -29,8 +29,8 @@ And a lot of features you know and love from non crab friendly languages and fra
 * [creating a command](#creating-a-command)
 * [deployment](#deployment)
 * [future versions & roadmap](#future-versions--roadmap)
-* [changelog]
-* [license]
+* [changelog](#changelog)
+* [license](#license)
 
 # Prerequisites
 To run this app skeleton, you need to:
@@ -235,6 +235,8 @@ Furthermore, a dockerized and deployable version will be available starting vers
     * [FEATURE] A makefile to automate all recurrent tasks.
     * [FEATURE] Automated console command generation.
     * [PATCH] The replacement bug in the `schema.rs`.
+    * [FEATURE] add a .env example.
+    * [PATCH] remove the .vscode folder.
 
 * Future versions
     * [PATCH] Remove the `""` required by clap for the console command launch.
