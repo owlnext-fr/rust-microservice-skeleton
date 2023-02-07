@@ -1,8 +1,37 @@
 [package]
 name = "rust-microservice-skeleton"
-version = "0.1.0"
+version = "1.0.0-rc1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rocket = {version = "0.5.0-rc.2", features = ["json"]}
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+config = { version =  "0.13.3", features = ["toml"]}
+colored = "2.0.0"
+jwt-simple = "0.11.2"
+dotenv = "0.15.0"
+validator = { version = "0.16.0", features = ["derive"] }
+diesel= {version = "2.0.2", features = ["postgres", "serde_json", "r2d2", "chrono"]}
+diesel_migrations = "2.0.0"
+r2d2 = "0.8.10"
+chrono = {version = "0.4.23", features = ["serde"]}
+passwords = "3.1.12"
+argon2 = "0.4"
+rand_core = { version = "0.6", features = ["std"] }
+anyhow = {version = "1.0.68", features = ["backtrace"] }
+md5 = "0.7.0"
+tokio-test = "0.4.2"
+ulid = "1.0.0"
+clap = { version = "4.1.4", features = ["derive"] }
+inquire = { version = "0.5.3", features = ["date"] }
+console = "0.15.5"
+indicatif = "0.17.3"
+stopwatch = "0.0.7"
+comfy-table = "6.1.4"
+thiserror = "1.0.38"
+fancy-regex = "0.11.0"
+map-macro = "0.2.5"
+inflections = "1.1.1"
