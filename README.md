@@ -237,9 +237,12 @@ Furthermore, a dockerized and deployable version will be available starting vers
     * [PATCH] The replacement bug in the `schema.rs`.
     * [FEATURE] add a .env example.
     * [PATCH] remove the .vscode folder.
+    * [FEATURE] Error dispatch with external tooling like Pushover/Sentry.
+    * [FEATURE] Adding CORS support.
 
 * Future versions
     * [PATCH] Remove the `""` required by clap for the console command launch.
+    * [FEATURE] Automated API documentation.
 
 # Changelog
 
